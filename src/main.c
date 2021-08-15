@@ -44,6 +44,8 @@ void main(void)
 	}
 
 	while (1) {
+		printk("Teste\n");
+		printk("Teste AAA\n");
 		gpio_pin_set(dev, PIN, (int)led_is_on);
 		led_is_on = !led_is_on;
 		k_msleep(SLEEP_TIME_MS);
