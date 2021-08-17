@@ -7,3 +7,10 @@
 	tx-pin = < 0x25 >;
 	rx-pin = < 0x26 >;
 };
+
+&i2c1 {
+	shtc3@70 {
+		label = "SHTC3";
+		reg = <0x70>;
+	};
+};
