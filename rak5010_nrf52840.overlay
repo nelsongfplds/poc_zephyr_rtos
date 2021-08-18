@@ -9,8 +9,15 @@
 };
 
 &i2c1 {
-	shtc3@70 {
+	shtc3: shtc3@70 {
 		label = "SHTC3";
 		reg = <0x70>;
 	};
 };
+
+/ {
+	aliases {
+		shtc3 = &shtc3;
+	};
+};
+

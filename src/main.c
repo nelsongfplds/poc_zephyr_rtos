@@ -12,7 +12,7 @@
 #include <sensor.h>
 
 /* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   1000
+#define SLEEP_TIME_MS   10000
 
 /* The devicetree node identifier for the "led0" alias. */
 #define LED0_NODE DT_ALIAS(led0)
@@ -29,47 +29,65 @@
 #define FLAGS	0
 #endif
 
+/* #define SHTC3_NODE DT_ALIAS(shtc3) */
+#define SHTC3_NODE DT_PATH(soc, i2c_40004000, opt3001_44)
+
 void main(void)
 {
 	const struct device *dev;
-	const struct device *shtc3;
+	const struct device *shtc3_dev;
 	bool led_is_on = true;
 	int ret;
 
+	printk("Main\n");
 	dev = device_get_binding(LED0);
 	if (dev == NULL) {
+		printk("LED0 not found\n");
 		return;
 	}
 
 	ret = gpio_pin_configure(dev, PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
+		printk("LED0 not configured\n");
 		return;
 	}
 
+	/* printk("str: %s\n", LED0); */
+	/* printk("expanded: %s\n", LED0_NODE); */
+	/* printk("expanded: %s\n", DT_PATH(leds, led_0)); */
+	/* printk("expanded: %s\n", DT_PATH(soc, i2c_40004000, opt3001_44)); */
+	printk("Sensor\n");
 	struct sensor_value sv;
-	shtc3 = device_get_binding("SHTC3");
-	if (shtc3 == NULL) {
+#if DT_NODE_HAS_STATUS(SHTC3_NODE, okay)
+	shtc3_dev = device_get_binding(DT_LABEL(SHTC3_NODE));
+	printk("Node is enabled\n");
+#else
+#error "Node is disabled"
+	printk("Node is disabled\n");
+#endif
+	if (shtc3_dev == NULL) {
+		printk("SHTC3 not found\n");
 		return;
 	}
 
-	ret = sensor_sample_fetch(shtc3);
-	if (ret != 0) {
-		printk("sensor_sample_fetch error: %d\n", ret);
-	}
+	/* ret = sensor_sample_fetch(shtc3_dev); */
+	/* if (ret != 0) { */
+	/* 	printk("sensor_sample_fetch error: %d\n", ret); */
+	/* } */
 
-	ret = sensor_channel_get(shtc3, SENSOR_CHAN_AMBIENT_TEMP, &sv);
-	if (ret != 0) {
-		printk("sensor_channel_get error: %d\n", ret);
-	}
+	/* ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &sv); */
+	/* if (ret != 0) { */
+	/* 	printk("sensor_channel_get error: %d\n", ret); */
+	/* } */
 
-	printk("Temperature: %g C\n", sensor_value_to_double(&sv));
+	/* printk("Temperature: %g C\n", sensor_value_to_double(&sv)); */
 
-	ret = sensor_channel_get(shtc3, SENSOR_CHAN_HUMIDITY, &sv);
-	if (ret != 0) {
-		printk("sensor_channel_get error: %d\n", ret);
-	}
+	/* ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &sv); */
+	/* if (ret != 0) { */
+	/* 	printk("sensor_channel_get error: %d\n", ret); */
+	/* } */
 
-	printk("Humidity: %g C\n", sensor_value_to_double(&sv));
+	/* printk("Humidity: %g C\n", sensor_value_to_double(&sv)); */
 
 	while (1) {
 		gpio_pin_set(dev, PIN, (int)led_is_on);
