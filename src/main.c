@@ -76,14 +76,15 @@ void main(void)
 		printk("sensor_channel_get error: %d\n", ret);
 	}
 
-	/* printk("Temperature: %g C\n", sensor_value_to_double(&sv)); */
+	/* printk("Temperature: %f C\n", sensor_value_to_double(&sv)); */
+	printk("Temperature: %d.%06d C\n", sv.val1, sv.val2);
 
-	/* ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &sv); */
-	/* if (ret != 0) { */
-	/* 	printk("sensor_channel_get error: %d\n", ret); */
-	/* } */
+	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &sv);
+	if (ret != 0) {
+		printk("sensor_channel_get error: %d\n", ret);
+	}
 
-	/* printk("Humidity: %g C\n", sensor_value_to_double(&sv)); */
+	printk("Humidity: %f C\n", sensor_value_to_double(&sv));
 
 	while (1) {
 		gpio_pin_set(dev, PIN, (int)led_is_on);
