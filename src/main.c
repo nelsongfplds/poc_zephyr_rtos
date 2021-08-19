@@ -8,7 +8,7 @@
 #include <device.h>
 #include <devicetree.h>
 #include <drivers/gpio.h>
-#include <shtcx.h>
+/* #include <shtcx.h> */
 #include <sensor.h>
 
 /* 1000 msec = 1 sec */
@@ -29,8 +29,8 @@
 #define FLAGS	0
 #endif
 
-/* #define SHTC3_NODE DT_ALIAS(shtc3) */
-#define SHTC3_NODE DT_PATH(soc, i2c_40004000, opt3001_44)
+#define SHTC3_NODE DT_ALIAS(shtc3)
+/* #define SHTC3_NODE DT_PATH(soc, i2c_40004000, opt3001_44) */
 
 void main(void)
 {
@@ -52,10 +52,6 @@ void main(void)
 		return;
 	}
 
-	/* printk("str: %s\n", LED0); */
-	/* printk("expanded: %s\n", LED0_NODE); */
-	/* printk("expanded: %s\n", DT_PATH(leds, led_0)); */
-	/* printk("expanded: %s\n", DT_PATH(soc, i2c_40004000, opt3001_44)); */
 	printk("Sensor\n");
 	struct sensor_value sv;
 #if DT_NODE_HAS_STATUS(SHTC3_NODE, okay)
@@ -70,15 +66,15 @@ void main(void)
 		return;
 	}
 
-	/* ret = sensor_sample_fetch(shtc3_dev); */
-	/* if (ret != 0) { */
-	/* 	printk("sensor_sample_fetch error: %d\n", ret); */
-	/* } */
+	ret = sensor_sample_fetch(shtc3_dev);
+	if (ret != 0) {
+		printk("sensor_sample_fetch error: %d\n", ret);
+	}
 
-	/* ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &sv); */
-	/* if (ret != 0) { */
-	/* 	printk("sensor_channel_get error: %d\n", ret); */
-	/* } */
+	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &sv);
+	if (ret != 0) {
+		printk("sensor_channel_get error: %d\n", ret);
+	}
 
 	/* printk("Temperature: %g C\n", sensor_value_to_double(&sv)); */
 
