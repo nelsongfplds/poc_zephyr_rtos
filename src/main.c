@@ -1,18 +1,10 @@
-/*
- * Copyright (c) 2016 Intel Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
-#include <zephyr.h>
 #include <device.h>
+#include <sensor.h>
+#include <zephyr.h>
 #include <devicetree.h>
 #include <drivers/gpio.h>
-/* #include <shtcx.h> */
-#include <sensor.h>
 
-/* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   10000
+#define SLEEP_TIME_MS   5000
 
 /* The devicetree node identifier for the "led0" alias. */
 #define LED0_NODE DT_ALIAS(led0)
@@ -29,66 +21,90 @@
 #define FLAGS	0
 #endif
 
+/* The devicetree node identifier for the "shtc3" alias. */
 #define SHTC3_NODE DT_ALIAS(shtc3)
-/* #define SHTC3_NODE DT_PATH(soc, i2c_40004000, opt3001_44) */
 
-void main(void)
-{
-	const struct device *dev;
-	const struct device *shtc3_dev;
-	bool led_is_on = true;
+#if !DT_NODE_HAS_STATUS(SHTC3_NODE, okay)
+#error "Unsupported board: shtc3 devicetree alias is not defined"
+#endif
+
+static const struct device *init_led() {
 	int ret;
+	const struct device *led_dev = device_get_binding(LED0);
 
-	printk("Main\n");
-	dev = device_get_binding(LED0);
-	if (dev == NULL) {
+	if (led_dev == NULL) {
 		printk("LED0 not found\n");
-		return;
+		return NULL;
 	}
 
-	ret = gpio_pin_configure(dev, PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
+	ret = gpio_pin_configure(led_dev, PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		printk("LED0 not configured\n");
-		return;
+		return NULL;
 	}
 
-	printk("Sensor\n");
-	struct sensor_value sv;
-#if DT_NODE_HAS_STATUS(SHTC3_NODE, okay)
-	shtc3_dev = device_get_binding(DT_LABEL(SHTC3_NODE));
-	printk("Node is enabled\n");
-#else
-#error "Node is disabled"
-	printk("Node is disabled\n");
-#endif
+	return led_dev;
+}
+
+static const struct device *init_shtc3() {
+	const struct device *shtc3_dev = device_get_binding(DT_LABEL(SHTC3_NODE));
+
 	if (shtc3_dev == NULL) {
 		printk("SHTC3 not found\n");
-		return;
+		return NULL;
 	}
+
+	return shtc3_dev;
+}
+
+static void shtc3_sensor_read(const struct device *shtc3_dev) {
+	int ret;
+	struct sensor_value shtc3_sv;
 
 	ret = sensor_sample_fetch(shtc3_dev);
 	if (ret != 0) {
 		printk("sensor_sample_fetch error: %d\n", ret);
 	}
 
-	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &sv);
+	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &shtc3_sv);
 	if (ret != 0) {
 		printk("sensor_channel_get error: %d\n", ret);
 	}
 
-	/* printk("Temperature: %f C\n", sensor_value_to_double(&sv)); */
-	printk("Temperature: %d.%06d C\n", sv.val1, sv.val2);
+	/* printk("Temperature: %f C\n", sensor_value_to_double(&shtc3_sv)); */
+	printk("Temperature: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
 
-	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &sv);
+	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &shtc3_sv);
 	if (ret != 0) {
 		printk("sensor_channel_get error: %d\n", ret);
 	}
 
-	printk("Humidity: %f C\n", sensor_value_to_double(&sv));
+	/* printk("Humidity: %f C\n", sensor_value_to_double(&shtc3_sv)); */
+	printk("Humidity: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
+}
 
-	while (1) {
-		gpio_pin_set(dev, PIN, (int)led_is_on);
-		led_is_on = !led_is_on;
+void main(void)
+{
+	const struct device *led_dev = init_led();
+	const struct device *shtc3_dev = init_shtc3();
+
+	if (led_dev == NULL) {
+		printk("Led not found, stopping...\n");
+		return;
+	}
+
+	if (shtc3_dev == NULL) {
+		printk("SHTC3 sensor not found, stopping...\n");
+		return;
+	}
+
+	printk("Devices initialized!\n");
+	gpio_pin_set(led_dev, PIN, (int)true);
+
+	printk("Led set, begin main loop");
+	while (true) {
+		shtc3_sensor_read(shtc3_dev);
+
 		k_msleep(SLEEP_TIME_MS);
 	}
 }
