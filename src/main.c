@@ -99,7 +99,7 @@ void main(void)
 	}
 
 	printk("Devices initialized!\n");
-	gpio_pin_set(led_dev, PIN, (int)true);
+	gpio_pin_set(led_dev, PIN, 0);
 
 	printk("Led set, begin main loop");
 	while (true) {
