@@ -21,6 +21,7 @@
 / {
 	aliases {
 		shtc3 = &shtc3;
+		quectelbg9x = &quectel_bg9x;
 	};
 };
 

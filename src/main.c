@@ -28,6 +28,13 @@
 #error "Unsupported board: shtc3 devicetree alias is not defined"
 #endif
 
+/* The devicetree node identifier for the "quectel_bg9x" alias. */
+#define BG96_NODE DT_ALIAS(quectelbg9x)
+
+#if !DT_NODE_HAS_STATUS(BG96_NODE, okay)
+#error "Unsupported board: bg96 devicetree alias is not defined"
+#endif
+
 static const struct device *init_led() {
 	int ret;
 	const struct device *led_dev = device_get_binding(LED0);
@@ -55,6 +62,17 @@ static const struct device *init_shtc3() {
 	}
 
 	return shtc3_dev;
+}
+
+static const struct device *init_bg96() {
+	const struct device *bg96_dev = device_get_binding(DT_LABEL(BG96_NODE));
+
+	if (bg96_dev == NULL) {
+		printk("BG96 not found\n");
+		return NULL;
+	}
+
+	return bg96_dev;
 }
 
 static void shtc3_sensor_read(const struct device *shtc3_dev) {
@@ -86,6 +104,7 @@ static void shtc3_sensor_read(const struct device *shtc3_dev) {
 void main(void)
 {
 	const struct device *led_dev = init_led();
+	const struct device *bg96_dev = init_bg96();
 	const struct device *shtc3_dev = init_shtc3();
 
 	if (led_dev == NULL) {
@@ -95,6 +114,16 @@ void main(void)
 
 	if (shtc3_dev == NULL) {
 		printk("SHTC3 sensor not found, stopping...\n");
+		return;
+	}
+
+	if (bg96_dev == NULL) {
+		printk("BG96 modem not found, stopping...\n");
+		while (true) {
+			printk("BG96 modem not found, stopping...\n");
+
+			k_msleep(2000);
+		}
 		return;
 	}
 
