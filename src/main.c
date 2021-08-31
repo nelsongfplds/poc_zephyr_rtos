@@ -28,8 +28,8 @@
 #error "Unsupported board: shtc3 devicetree alias is not defined"
 #endif
 
-/* The devicetree node identifier for the "quectel_bg9x" alias. */
-#define BG96_NODE DT_ALIAS(quectelbg9x)
+/* The devicetree node identifier for the "quectel_bg9x". */
+#define BG96_NODE DT_NODELABEL(quectel_bg9x)
 
 #if !DT_NODE_HAS_STATUS(BG96_NODE, okay)
 #error "Unsupported board: bg96 devicetree alias is not defined"
@@ -121,7 +121,7 @@ void main(void)
 		printk("BG96 modem not found, stopping...\n");
 		while (true) {
 			printk("BG96 modem not found, stopping...\n");
-
+			printk("prop: %s\n", DT_PROP(DT_NODELABEL(quectel_bg9x), label));
 			k_msleep(2000);
 		}
 		return;
