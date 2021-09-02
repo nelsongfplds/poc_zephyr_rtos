@@ -29,10 +29,16 @@
 #endif
 
 /* The devicetree node identifier for the "quectel_bg9x". */
-#define BG96_NODE DT_NODELABEL(quectel_bg9x)
+#define BG96_NODE DT_ALIAS(bg9x)
 
 #if !DT_NODE_HAS_STATUS(BG96_NODE, okay)
-#error "Unsupported board: bg96 devicetree alias is not defined"
+#error "Unsupported board: bg96 devicetree node is not defined"
+#endif
+
+#define UART0_NODE DT_NODELABEL(uart0)
+
+#if !DT_NODE_HAS_STATUS(UART0_NODE, okay)
+#error "Unsupported board: uart0 devicetree node is not defined"
 #endif
 
 static const struct device *init_led() {
@@ -62,6 +68,17 @@ static const struct device *init_shtc3() {
 	}
 
 	return shtc3_dev;
+}
+
+static const struct device *init_uart() {
+	const struct device *uart0_dev = device_get_binding(DT_LABEL(UART0_NODE));
+
+	if (uart0_dev == NULL) {
+		printk("UART0 not found\n");
+		return NULL;
+	}
+
+	return uart0_dev;
 }
 
 static const struct device *init_bg96() {
@@ -105,6 +122,7 @@ void main(void)
 {
 	const struct device *led_dev = init_led();
 	const struct device *bg96_dev = init_bg96();
+	const struct device *uart_dev = init_uart();
 	const struct device *shtc3_dev = init_shtc3();
 
 	if (led_dev == NULL) {
@@ -114,6 +132,11 @@ void main(void)
 
 	if (shtc3_dev == NULL) {
 		printk("SHTC3 sensor not found, stopping...\n");
+		return;
+	}
+
+	if (uart_dev == NULL) {
+		printk("UART0 not found, stopping...\n");
 		return;
 	}
 
@@ -130,7 +153,7 @@ void main(void)
 	printk("Devices initialized!\n");
 	gpio_pin_set(led_dev, PIN, 0);
 
-	printk("Led set, begin main loop");
+	printk("Led set, begin main loop\n");
 	while (true) {
 		shtc3_sensor_read(shtc3_dev);
 

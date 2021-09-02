@@ -1,13 +1,3 @@
-&uart0 {
-	compatible = "nordic,nrf-uarte";
-};
-
-&uart1 {
-	compatible = "nordic,nrf-uarte";
-	tx-pin = < 0x25 >;
-	rx-pin = < 0x26 >;
-};
-
 &i2c1 {
 	shtc3: shtc3@70 {
 		compatible = "sensirion,shtcx";
@@ -21,6 +11,12 @@
 / {
 	aliases {
 		shtc3 = &shtc3;
+		bg9x = &quectel_bg9x;
 	};
 };
 
+&uart0 {
+	quectel_bg9x: quectel_bg9x {
+		label = "BG9X";
+	};
+};
