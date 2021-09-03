@@ -11,12 +11,9 @@
 / {
 	aliases {
 		shtc3 = &shtc3;
-		bg9x = &quectel_bg9x;
 	};
 };
 
-&uart0 {
-	quectel_bg9x: quectel_bg9x {
-		label = "BG9X";
-	};
+&uart1 {
+	status = "disabled";
 };
