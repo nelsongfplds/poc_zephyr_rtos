@@ -28,13 +28,6 @@
 #error "Unsupported board: shtc3 devicetree alias is not defined"
 #endif
 
-/* The devicetree node identifier for the "quectel_bg9x". */
-#define BG96_NODE DT_NODELABEL(quectel_bg9x)
-
-#if !DT_NODE_HAS_STATUS(BG96_NODE, okay)
-#error "Unsupported board: bg96 devicetree node is not defined"
-#endif
-
 #define UART0_NODE DT_NODELABEL(uart0)
 
 #if !DT_NODE_HAS_STATUS(UART0_NODE, okay)
@@ -81,17 +74,6 @@ static const struct device *init_uart() {
 	return uart0_dev;
 }
 
-static const struct device *init_bg96() {
-	const struct device *bg96_dev = device_get_binding(DT_LABEL(BG96_NODE));
-
-	if (bg96_dev == NULL) {
-		printk("BG96 not found\n");
-		return NULL;
-	}
-
-	return bg96_dev;
-}
-
 static void shtc3_sensor_read(const struct device *shtc3_dev) {
 	int ret;
 	struct sensor_value shtc3_sv;
@@ -123,7 +105,6 @@ void main(void)
 	const struct device *led_dev = init_led();
 	const struct device *uart_dev = init_uart();
 	const struct device *shtc3_dev = init_shtc3();
-	const struct device *bg96_dev = init_bg96();
 
 	if (led_dev == NULL) {
 		printk("Led not found, stopping...\n");
@@ -137,15 +118,6 @@ void main(void)
 
 	if (uart_dev == NULL) {
 		printk("UART0 not found, stopping...\n");
-		return;
-	}
-
-	if (bg96_dev == NULL) {
-		while (true) {
-			printk("BG96 modem not found, stopping...\n");
-			printk("prop: %s\n", DT_PROP(DT_NODELABEL(quectel_bg9x), label));
-			k_msleep(2000);
-		}
 		return;
 	}
 

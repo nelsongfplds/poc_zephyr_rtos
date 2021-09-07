@@ -14,6 +14,10 @@
 	};
 };
 
-&uart1 {
-	status = "disabled";
+&uart0 {
+	compatible = "nordic,uartspecific";
+	mdm-power-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	mdm-reset-gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
+	mdm-dtr-gpios = <&gpio0 26 GPIO_ACTIVE_LOW>;
+	mdm-wdisable-gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
 };
