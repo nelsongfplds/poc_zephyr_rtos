@@ -34,6 +34,13 @@
 #error "Unsupported board: uart0 devicetree node is not defined"
 #endif
 
+/* Static variables and constants */
+static const struct gpio_dt_spec mdm_pwr_pin = GPIO_DT_SPEC_GET(UART0_NODE, mdm_power_gpios);
+static const struct gpio_dt_spec mdm_rst_pin = GPIO_DT_SPEC_GET(UART0_NODE, mdm_reset_gpios);
+static const struct gpio_dt_spec mdm_wdisable_pin = GPIO_DT_SPEC_GET(UART0_NODE, mdm_wdisable_gpios);
+static const struct gpio_dt_spec mdm_status_pin = GPIO_DT_SPEC_GET(UART0_NODE, mdm_status_gpios);
+
+/* Static methods */
 static const struct device *init_led() {
 	int ret;
 	const struct device *led_dev = device_get_binding(LED0);
@@ -70,6 +77,30 @@ static const struct device *init_uart() {
 		printk("UART0 not found\n");
 		return NULL;
 	}
+
+	if (!device_is_ready(mdm_pwr_pin.port)) {
+		printk("MDM_PWR_PIN not ready\n");
+	}
+	gpio_pin_configure_dt(&mdm_pwr_pin, GPIO_OUTPUT_ACTIVE);
+
+	if (!device_is_ready(mdm_rst_pin.port)) {
+		printk("MDM_RST_PIN not ready\n");
+	}
+	gpio_pin_configure_dt(&mdm_rst_pin, GPIO_OUTPUT_ACTIVE);
+
+	if (!device_is_ready(mdm_wdisable_pin.port)) {
+		printk("MDM_WDISABLE_PIN not ready\n");
+	}
+	gpio_pin_configure_dt(&mdm_wdisable_pin, GPIO_OUTPUT_ACTIVE);
+
+	if (!device_is_ready(mdm_status_pin.port)) {
+		printk("MDM_STATUS_PIN not ready\n");
+	}
+	gpio_pin_configure_dt(&mdm_wdisable_pin, GPIO_INPUT);
+
+	gpio_pin_set_dt(&mdm_pwr_pin, 0);
+	gpio_pin_set_dt(&mdm_rst_pin, 1);
+	gpio_pin_set_dt(&mdm_wdisable_pin, 0);
 
 	return uart0_dev;
 }
