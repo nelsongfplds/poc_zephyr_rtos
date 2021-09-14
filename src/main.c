@@ -1,8 +1,10 @@
 #include <device.h>
 #include <sensor.h>
 #include <zephyr.h>
+#include <string.h>
 #include <devicetree.h>
 #include <drivers/gpio.h>
+#include <drivers/uart.h>
 
 #define SLEEP_TIME_MS   5000
 
@@ -186,6 +188,41 @@ static void shtc3_sensor_read(const struct device *shtc3_dev) {
 	printk("Humidity: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
 }
 
+static void bg96_tx(const struct device *uart_dev)
+{
+	int i;
+	char *tx_str = "AT";
+
+	printk("Attempt to TX\n");
+	/* Verify uart_poll_out() */
+	for (i = 0; i < strlen(tx_str); i++) {
+		uart_poll_out(uart_dev, tx_str[i]);
+	}
+}
+
+static int bg96_rx(const struct device *uart_dev)
+{
+	int ret;
+	unsigned char recv_char;
+
+	printk("Attempt to RX\n");
+	/* Verify uart_poll_in() */
+	while (1) {
+		while ((ret = uart_poll_in(uart_dev, &recv_char)) < 0) {
+			printk("ret: %d\n", ret);
+		}
+
+		printk("%c", recv_char);
+
+		if ((recv_char == '\n') || (recv_char == '\r')) {
+			break;
+		}
+	}
+	printk("RX completed\n");
+
+	return 0;
+}
+
 void main(void)
 {
 	const struct device *led_dev = init_led();
@@ -216,6 +253,11 @@ void main(void)
 
 	printk("Devices initialized!\n");
 	gpio_pin_set(led_dev, PIN, 0);
+
+	k_msleep(SLEEP_TIME_MS*3);
+	printk("Modem comm test\n");
+	bg96_tx(uart_dev);
+	bg96_rx(uart_dev);
 
 	printk("Led set, begin main loop\n");
 	while (true) {
