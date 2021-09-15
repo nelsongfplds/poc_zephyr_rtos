@@ -81,13 +81,33 @@ static const struct device *init_shtc3() {
 	return shtc3_dev;
 }
 
+
+static void uart_callback(const struct device *uart_dev, void *data) {
+	uint8_t recv_data;
+	if (uart_irq_update(uart_dev) != 1) {
+		printk("should always return 1");
+		return;
+	}
+
+	if (uart_irq_rx_ready(uart_dev)) {
+		uart_fifo_read(uart_dev, &recv_data, 10);
+		printk("%c", (char)recv_data);
+	}
+}
+
 static const struct device *init_uart() {
 	const struct device *uart0_dev = device_get_binding(DT_LABEL(UART0_NODE));
+	if (uart0_dev == NULL) {
+		return NULL;
+	}
+
+	uart_irq_callback_set(uart0_dev, uart_callback);
+	uart_irq_rx_enable(uart0_dev);
 
 	return uart0_dev;
 }
 
-void init_gpio1() {
+static void init_gpio1() {
 	int ret;
 	const struct device *gpio_dev = device_get_binding(DT_LABEL(GPIO1_NODE));
 
@@ -188,41 +208,6 @@ static void shtc3_sensor_read(const struct device *shtc3_dev) {
 	printk("Humidity: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
 }
 
-static void bg96_tx(const struct device *uart_dev)
-{
-	int i;
-	char *tx_str = "AT";
-
-	printk("Attempt to TX\n");
-	/* Verify uart_poll_out() */
-	for (i = 0; i < strlen(tx_str); i++) {
-		uart_poll_out(uart_dev, tx_str[i]);
-	}
-}
-
-static int bg96_rx(const struct device *uart_dev)
-{
-	int ret;
-	unsigned char recv_char;
-
-	printk("Attempt to RX\n");
-	/* Verify uart_poll_in() */
-	while (1) {
-		while ((ret = uart_poll_in(uart_dev, &recv_char)) < 0) {
-			printk("ret: %d\n", ret);
-		}
-
-		printk("%c", recv_char);
-
-		if ((recv_char == '\n') || (recv_char == '\r')) {
-			break;
-		}
-	}
-	printk("RX completed\n");
-
-	return 0;
-}
-
 void main(void)
 {
 	const struct device *led_dev = init_led();
@@ -256,8 +241,7 @@ void main(void)
 
 	k_msleep(SLEEP_TIME_MS*3);
 	printk("Modem comm test\n");
-	bg96_tx(uart_dev);
-	bg96_rx(uart_dev);
+	/* uart_tx(uart_dev, "AT", 2, 1000); */
 
 	printk("Led set, begin main loop\n");
 	while (true) {
