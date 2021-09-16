@@ -240,8 +240,6 @@ void main(void)
 	gpio_pin_set(led_dev, PIN, 0);
 
 	k_msleep(SLEEP_TIME_MS*3);
-	printk("Modem comm test\n");
-	/* uart_tx(uart_dev, "AT", 2, 1000); */
 
 	printk("Led set, begin main loop\n");
 	while (true) {
