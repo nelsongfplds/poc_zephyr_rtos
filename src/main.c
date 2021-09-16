@@ -90,8 +90,22 @@ static void uart_callback(const struct device *uart_dev, void *data) {
 	}
 
 	if (uart_irq_rx_ready(uart_dev)) {
-		uart_fifo_read(uart_dev, &recv_data, 10);
+		int ret = 0;
+		ret = uart_fifo_read(uart_dev, &recv_data, sizeof(uint8_t));
 		printk("%c", (char)recv_data);
+		printk("ret: %d\n", ret);
+	}
+
+	if (uart_irq_tx_ready(uart_dev)) {
+		printk("TX READY\n");
+		uint8_t cmd[4] = "ATI";
+		int sent = 0;
+		int len = strlen(cmd);
+
+		sent = uart_fifo_fill(uart_dev, cmd, len);
+		printk("Sent %d bytes\n", sent);
+
+		uart_irq_tx_disable(uart_dev);
 	}
 }
 
@@ -239,12 +253,13 @@ void main(void)
 	printk("Devices initialized!\n");
 	gpio_pin_set(led_dev, PIN, 0);
 
-	k_msleep(SLEEP_TIME_MS*3);
+	k_msleep(SLEEP_TIME_MS*2);
+	uart_irq_tx_enable(uart_dev);
 
-	printk("Led set, begin main loop\n");
-	while (true) {
-		shtc3_sensor_read(shtc3_dev);
+	/* printk("Led set, begin main loop\n"); */
+	/* while (true) { */
+	/* 	shtc3_sensor_read(shtc3_dev); */
 
-		k_msleep(SLEEP_TIME_MS);
-	}
+	/* 	k_msleep(SLEEP_TIME_MS); */
+	/* } */
 }
