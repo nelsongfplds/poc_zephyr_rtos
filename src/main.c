@@ -63,9 +63,6 @@
 static uint8_t recv_buffer[RING_BUFFER_SIZE];
 static uint8_t send_buffer[RING_BUFFER_SIZE];
 
-static struct ring_buf recv_ringbuff;
-static struct ring_buf send_ringbuff;
-
 /* Static methods */
 static const struct device *init_led() {
 	int ret;
@@ -92,47 +89,21 @@ static const struct device *init_shtc3() {
 }
 
 
-static void uart_callback(const struct device *uart_dev, void *data) {
-	while (uart_irq_update(uart_dev) && uart_irq_is_pending(uart_dev)) {
-		if (uart_irq_rx_ready(uart_dev)) {
-			int rb_len, recv_len;
-			uint8_t buffer[64];
-
-			// calculate available size to copy
-			size_t len = MIN(ring_buf_space_get(&recv_ringbuff),
-					 sizeof(buffer));
-
-			// copy data from UART to buffer, caps at len
-			recv_len = uart_fifo_read(uart_dev, buffer, len);
-
-			// copy data received into the ringbuffer
-			rb_len = ring_buf_put(&recv_ringbuff, buffer, recv_len);
-			if (rb_len < recv_len) {
-				printk("RX: Dropped %u bytes\n", recv_len - rb_len);
-			}
-
-			printk("%s", (char*)buffer);
-		}
-
-		if (uart_irq_tx_ready(uart_dev)) {
-			printk("Callback on TX\n");
-			int rb_len, send_len;
-			uint8_t buffer[64];
-
-			// retrieve the command from ringbuffer and set it to buffer
-			rb_len = ring_buf_get(&send_ringbuff, buffer, sizeof(buffer));
-			if (!rb_len) {
-				printk("TX: Ring buffer empty, disable TX IRQ\n");
-				uart_irq_tx_disable(uart_dev);
-				continue;
-			}
-
-			// send the command in the buffer to the UART
-			send_len = uart_fifo_fill(uart_dev, buffer, rb_len);
-			if (send_len < rb_len) {
-				printk("TX: Drop %d bytes\n", rb_len - send_len);
-			}
-		}
+static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
+	printk("Callback\n");
+	switch (evt->type) {
+		case UART_TX_DONE:
+			break;
+		case UART_TX_ABORTED:
+			break;
+		case UART_RX_RDY:
+			break;
+		case UART_RX_BUF_RELEASED:
+			break;
+		case UART_RX_DISABLED:
+			break;
+		default:
+			break;
 	}
 }
 
@@ -142,8 +113,8 @@ static const struct device *init_uart() {
 		return NULL;
 	}
 
-	uart_irq_callback_set(uart0_dev, uart_callback);
-	uart_irq_rx_enable(uart0_dev);
+	uart_callback_set(uart0_dev, uart_callback, NULL);
+	uart_rx_enable(uart0_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
 	return uart0_dev;
 }
@@ -256,8 +227,6 @@ void main(void)
 	const struct device *gpio0_dev = init_gpio0();
 	const struct device *shtc3_dev = init_shtc3();
 	init_gpio1();
-	ring_buf_init(&recv_ringbuff, sizeof(recv_buffer), recv_buffer);
-	ring_buf_init(&send_ringbuff, sizeof(send_buffer), send_buffer);
 
 	if (led_dev == NULL) {
 		printk("Led not found, stopping...\n");
@@ -283,11 +252,9 @@ void main(void)
 	gpio_pin_set(led_dev, PIN, 0);
 
 	k_msleep(SLEEP_TIME_MS*2);
-
-	int sent = ring_buf_put(&send_ringbuff, (uint8_t*)"AT+GMR", 7*sizeof(uint8_t));
-	printk("Wrote %d bytes\n", sent);
-
-	uart_irq_tx_enable(uart_dev);
+	printk("uart_tx begin:\n");
+	int ret = uart_tx(uart_dev, send_buffer, RING_BUFFER_SIZE, 100);
+	printk("uart_tx end, ret = %d:\n", ret);
 
 	/* printk("Led set, begin main loop\n"); */
 	/* while (true) { */
