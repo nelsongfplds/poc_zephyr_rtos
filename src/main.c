@@ -90,27 +90,33 @@ static const struct device *init_shtc3() {
 
 
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
-	printk("Callback\n");
-	printk("recv_buffer: %s\n", (char*) recv_buffer);
 	switch (evt->type) {
 		case UART_TX_DONE:
-			printk("UART_TX_DONE EVT\n");
+			printk("UART_TX_DONE\n");
 			break;
 		case UART_TX_ABORTED:
-			printk("UART_TX_ABORTED EVT\n");
+			printk("UART_TX_ABORTED\n");
 			break;
 		case UART_RX_RDY:
-			printk("UART_RX_RDY EVT\n");
+			printk("UART_RX_RDY\n");
+			break;
+		case UART_RX_BUF_REQUEST:
+			printk("UART_RX_BUF_REQUEST\n");
 			break;
 		case UART_RX_BUF_RELEASED:
-			printk("UART_RX_BUF_RELEASED EVT\n");
+			printk("UART_RX_BUF_RELEASED\n");
 			break;
 		case UART_RX_DISABLED:
-			printk("UART_RX_DISABLED EVT\n");
+			printk("UART_RX_DISABLED\n");
+			break;
+		case UART_RX_STOPPED:
+			printk("UART_RX_STOPPED\n");
 			break;
 		default:
+			printk("Unknown event: %d\n", evt->type);
 			break;
 	}
+	printk("recv_buffer: %s\n", (char*) recv_buffer);
 }
 
 static const struct device *init_uart() {
@@ -262,10 +268,10 @@ void main(void)
 	int ret = uart_tx(uart_dev, send_buffer, RING_BUFFER_SIZE, 100);
 	printk("uart_tx end, ret = %d:\n", ret);
 
-	printk("Led set, begin main loop\n");
-	while (true) {
-		shtc3_sensor_read(shtc3_dev);
+	/* printk("Led set, begin main loop\n"); */
+	/* while (true) { */
+	/* 	shtc3_sensor_read(shtc3_dev); */
 
-		k_msleep(SLEEP_TIME_MS);
-	}
+	/* 	k_msleep(SLEEP_TIME_MS); */
+	/* } */
 }
