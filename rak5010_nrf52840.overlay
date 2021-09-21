@@ -8,6 +8,10 @@
 	};
 };
 
+&quectel_bg9x {
+	status = "disabled";
+};
+
 / {
 	aliases {
 		shtc3 = &shtc3;

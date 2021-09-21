@@ -2,6 +2,7 @@
 #include <sensor.h>
 #include <zephyr.h>
 #include <string.h>
+#include <stdlib.h>
 #include <devicetree.h>
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
@@ -61,7 +62,7 @@
 
 /* Static variables */
 static uint8_t recv_buffer[RING_BUFFER_SIZE];
-static uint8_t send_buffer[RING_BUFFER_SIZE] = "ATI";
+static uint8_t send_buffer[RING_BUFFER_SIZE];
 
 /* Static methods */
 static const struct device *init_led() {
@@ -125,6 +126,9 @@ static const struct device *init_uart() {
 		return NULL;
 	}
 
+	memset(recv_buffer, 0, RING_BUFFER_SIZE);
+	memset(send_buffer, 0, RING_BUFFER_SIZE);
+	memcpy(send_buffer, "ATI", 3);
 	uart_callback_set(uart0_dev, uart_callback, NULL);
 	uart_rx_enable(uart0_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
