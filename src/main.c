@@ -4,6 +4,8 @@
 #include <devicetree.h>
 #include <drivers/gpio.h>
 
+#include "battery.h"
+
 #define SLEEP_TIME_MS   5000
 
 /* The devicetree node identifier for the "led0" alias. */
@@ -188,6 +190,7 @@ static void shtc3_sensor_read(const struct device *shtc3_dev) {
 
 void main(void)
 {
+	int batt_mv = battery_sample();
 	const struct device *led_dev = init_led();
 	const struct device *uart_dev = init_uart();
 	const struct device *gpio0_dev = init_gpio0();
@@ -219,6 +222,14 @@ void main(void)
 
 	printk("Led set, begin main loop\n");
 	while (true) {
+		if (batt_mv < 0) {
+			printk("Failed to read battery voltage: %d\n",
+			       batt_mv);
+			break;
+		}
+
+		printk("Level: %d mV\n", batt_mv);
+
 		shtc3_sensor_read(shtc3_dev);
 
 		k_msleep(SLEEP_TIME_MS);
