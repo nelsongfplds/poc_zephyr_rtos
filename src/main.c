@@ -268,14 +268,14 @@ void main(void)
 	gpio_pin_set(led_dev, PIN, 0);
 
 	k_msleep(SLEEP_TIME_MS*2);
-	printk("uart_tx begin:\n");
-	int ret = uart_tx(uart_dev, send_buffer, RING_BUFFER_SIZE, 100);
-	printk("uart_tx end, ret = %d:\n", ret);
 
 	/* printk("Led set, begin main loop\n"); */
-	/* while (true) { */
-	/* 	shtc3_sensor_read(shtc3_dev); */
+	while (true) {
+		/* shtc3_sensor_read(shtc3_dev); */
 
-	/* 	k_msleep(SLEEP_TIME_MS); */
-	/* } */
+		printk("uart_tx begin:\n");
+		int ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
+		printk("uart_tx end, ret = %d:\n", ret);
+		k_msleep(SLEEP_TIME_MS);
+	}
 }
