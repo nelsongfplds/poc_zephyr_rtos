@@ -8,10 +8,6 @@
 	};
 };
 
-&uart0 {
-	tx-pin = < 0x19 >;
-};
-
 &quectel_bg9x {
 	status = "disabled";
 };

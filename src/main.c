@@ -128,7 +128,7 @@ static const struct device *init_uart() {
 
 	memset(recv_buffer, 0, RING_BUFFER_SIZE);
 	memset(send_buffer, 0, RING_BUFFER_SIZE);
-	memcpy(send_buffer, "ATI", 3);
+	memcpy(send_buffer, "AT+QPOWD=1", 10);
 	uart_callback_set(uart0_dev, uart_callback, NULL);
 	uart_rx_enable(uart0_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
@@ -276,6 +276,7 @@ void main(void)
 		printk("uart_tx begin:\n");
 		int ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
 		printk("uart_tx end, ret = %d:\n", ret);
+		k_msleep(500);
 		k_msleep(SLEEP_TIME_MS);
 	}
 }
