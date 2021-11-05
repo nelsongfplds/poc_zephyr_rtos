@@ -128,7 +128,7 @@ static const struct device *init_uart() {
 
 	memset(recv_buffer, 0, RING_BUFFER_SIZE);
 	memset(send_buffer, 0, RING_BUFFER_SIZE);
-	memcpy(send_buffer, "AT+QPOWD=1", 10);
+	memcpy(send_buffer, "ATI", 10);
 	uart_callback_set(uart0_dev, uart_callback, NULL);
 	uart_rx_enable(uart0_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
@@ -198,14 +198,31 @@ static const struct device *init_gpio0() {
 	}
 
 	/* w disable pin */
-	ret = gpio_pin_configure(gpio_dev, MDM_W_DISABLE_PIN, GPIO_OUTPUT_ACTIVE);
+	ret = gpio_pin_configure(gpio_dev, MDM_W_DISABLE_PIN, GPIO_OUTPUT_INACTIVE);
 	if (ret < 0) {
 		printk("Error configuring MDM_W_DISABLE_PIN: %d", ret);
 	}
 
+	/* RTS pin */
+	ret = gpio_pin_configure(gpio_dev, 7, GPIO_OUTPUT_INACTIVE);
+	if (ret < 0) {
+		printk("Error configuring RTS: %d", ret);
+	}
+	/* CTS pin */
+	ret = gpio_pin_configure(gpio_dev, 11, GPIO_OUTPUT_INACTIVE);
+	if (ret < 0) {
+		printk("Error configuring CTS: %d", ret);
+	}
+	gpio_pin_set(gpio_dev, 7, 0);
+	gpio_pin_set(gpio_dev, 11, 0);
+	k_msleep(1000);
+
 	gpio_pin_set(gpio_dev, MDM_RST_PIN, 0);
+	gpio_pin_set(gpio_dev, MDM_W_DISABLE_PIN, 0);
+	gpio_pin_set(gpio_dev, MDM_PWR_PIN, 0);
+	k_msleep(60);
 	gpio_pin_set(gpio_dev, MDM_PWR_PIN, 1);
-	gpio_pin_set(gpio_dev, MDM_W_DISABLE_PIN, 1);
+	k_msleep(300);
 
 	return gpio_dev;
 }
@@ -269,14 +286,16 @@ void main(void)
 
 	k_msleep(SLEEP_TIME_MS*2);
 
+	int reps = 0;
 	/* printk("Led set, begin main loop\n"); */
-	while (true) {
+	while (reps < 2) {
 		/* shtc3_sensor_read(shtc3_dev); */
 
 		printk("uart_tx begin:\n");
 		int ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
 		printk("uart_tx end, ret = %d:\n", ret);
 		k_msleep(500);
-		k_msleep(SLEEP_TIME_MS);
+		k_msleep(SLEEP_TIME_MS*6);
+		reps++;
 	}
 }
