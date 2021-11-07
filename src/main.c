@@ -128,7 +128,7 @@ static const struct device *init_uart() {
 
 	memset(recv_buffer, 0, RING_BUFFER_SIZE);
 	memset(send_buffer, 0, RING_BUFFER_SIZE);
-	memcpy(send_buffer, "ATI", 10);
+	memcpy(send_buffer, "ATI\r", 10);
 	uart_callback_set(uart0_dev, uart_callback, NULL);
 	uart_rx_enable(uart0_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
@@ -288,7 +288,7 @@ void main(void)
 
 	int reps = 0;
 	/* printk("Led set, begin main loop\n"); */
-	while (reps < 2) {
+	while (reps < 1) {
 		/* shtc3_sensor_read(shtc3_dev); */
 
 		printk("uart_tx begin:\n");
@@ -296,6 +296,12 @@ void main(void)
 		printk("uart_tx end, ret = %d:\n", ret);
 		k_msleep(500);
 		k_msleep(SLEEP_TIME_MS*6);
+
+		memset(send_buffer, 0, RING_BUFFER_SIZE);
+		memcpy(send_buffer, "AT+TESTE\r", 10);
+		ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
+		printk("uart_tx end, ret = %d:\n", ret);
 		reps++;
 	}
+	printk("Exiting main...");
 }
