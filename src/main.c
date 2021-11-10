@@ -100,6 +100,8 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			break;
 		case UART_RX_RDY:
 			printk("UART_RX_RDY\n");
+			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
+			printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]);
 			break;
 		case UART_RX_BUF_REQUEST:
 			printk("UART_RX_BUF_REQUEST\n");
@@ -117,7 +119,6 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			printk("Unknown event: %d\n", evt->type);
 			break;
 	}
-	printk("recv_buffer: %s\n", (char*) recv_buffer);
 }
 
 static const struct device *init_uart() {
@@ -295,10 +296,11 @@ void main(void)
 		int ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
 		printk("uart_tx end, ret = %d:\n", ret);
 		k_msleep(500);
-		k_msleep(SLEEP_TIME_MS*6);
+		k_msleep(SLEEP_TIME_MS*2);
 
 		memset(send_buffer, 0, RING_BUFFER_SIZE);
-		memcpy(send_buffer, "AT+TESTE\r", 10);
+		memcpy(send_buffer, "AT+GMI\r", 7);
+		/* memcpy(send_buffer, "AT+QPOWD=0\r", 11); */
 		ret = uart_tx(uart_dev, send_buffer, strlen(send_buffer), 100);
 		printk("uart_tx end, ret = %d:\n", ret);
 		reps++;
