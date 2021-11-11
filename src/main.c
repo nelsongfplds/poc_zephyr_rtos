@@ -91,6 +91,8 @@ static const struct device *init_shtc3() {
 
 
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
+	char response[100];
+	memset(response, 0, 100);
 	switch (evt->type) {
 		case UART_TX_DONE:
 			printk("UART_TX_DONE\n");
@@ -99,9 +101,11 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			printk("UART_TX_ABORTED\n");
 			break;
 		case UART_RX_RDY:
+			memcpy(response, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			printk("UART_RX_RDY\n");
+			printk("response: \n%s\n", response);
 			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
-			printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]);
+			/* printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]); */
 			break;
 		case UART_RX_BUF_REQUEST:
 			printk("UART_RX_BUF_REQUEST\n");
