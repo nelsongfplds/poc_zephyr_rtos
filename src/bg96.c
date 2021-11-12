@@ -204,7 +204,6 @@ bool init_bg96() {
 }
 
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
-	gambi_counter = 0;
 	if (cmd_len > BG96_AT_CMD_MAX_LEN) {
 		return 0;
 	}
@@ -212,18 +211,19 @@ uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
 	/* Lock in order to block calling thread while waiting for the UART response */
 	pthread_mutex_lock(&uart_mutex);
 
+	gambi_counter = 0;
 	int ret;
 	char send_cmd[BG96_AT_CMD_MAX_LEN];
 	char send_cmd_len = cmd_len + 1;
 
-	printk("received cmd: %s\n", cmd);
+	/* printk("received cmd: %s\n", cmd); */
 
 	memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN);
 	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
 	memcpy(send_cmd, cmd, cmd_len);
 	send_cmd[cmd_len] = '\r';
 
-	ret = uart_tx(uart_dev, send_cmd, send_cmd_len, 100);
+	ret = uart_tx(uart_dev, "ATI\r", 4, 100);
 
 	printk("sleep until callback signals to wake up\n");
 	pthread_cond_wait(&uart_cond, &uart_mutex);
