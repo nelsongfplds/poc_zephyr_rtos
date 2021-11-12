@@ -2,6 +2,7 @@
 #define GEOCAN_BG96
 
 /* Includes */
+#include <pthread.h>
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
 #include <sys/ring_buffer.h>
@@ -9,6 +10,8 @@
 /* Defines */
 #define SLEEP_TIME_MS   5000
 #define RING_BUFFER_SIZE 1024
+#define BG96_AT_CMD_MAX_LEN 100
+#define BG96_AT_RSP_MAX_LEN 200 //TODO: Maybe resize this to a bigger number
 
 #define UART0_NODE DT_NODELABEL(uart0)
 

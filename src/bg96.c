@@ -1,15 +1,24 @@
 #include "bg96.h"
 
 /* Statics */
+static uint8_t gambi_counter = 0; //FIXME: workaround
+static pthread_mutex_t uart_mutex;
+static pthread_cond_t uart_cond;
 static const struct device *uart_dev;
 static const struct device *gpio0_dev;
 static const struct device *gpio1_dev;
-
 static uint8_t recv_buffer[RING_BUFFER_SIZE]; //TODO: Change to ring buffer
+static uint8_t bg96_resp[BG96_AT_RSP_MAX_LEN];
+static uint32_t bg96_resp_len = 0;
 
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
-	char response[100];
-	memset(response, 0, 100);
+	int ret;
+
+	ret = pthread_mutex_lock(&uart_mutex);
+	if (ret) {
+		printk("Error locking mutex, %d\n", ret);
+	}
+
 	switch (evt->type) {
 		case UART_TX_DONE:
 			printk("UART_TX_DONE\n");
@@ -18,9 +27,14 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			printk("UART_TX_ABORTED\n");
 			break;
 		case UART_RX_RDY:
-			memcpy(response, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			printk("UART_RX_RDY\n");
-			printk("response: \n%s\n", response);
+			gambi_counter++;
+			memcpy(bg96_resp, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
+			bg96_resp_len = evt->data.rx.len;
+			if (gambi_counter >= 2) {
+				printk("signal wakeup to sleeping thread\n");
+				pthread_cond_signal(&uart_cond);
+			}
 			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
 			/* printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]); */
 			break;
@@ -39,6 +53,11 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 		default:
 			printk("Unknown event: %d\n", evt->type);
 			break;
+	}
+
+	ret = pthread_mutex_unlock(&uart_mutex);
+	if (ret) {
+		printk("Error unlocking mutex, %d\n", ret);
 	}
 }
 
@@ -163,6 +182,9 @@ static bool init_gpio0() {
 bool init_bg96() {
 	bool ret;
 
+	pthread_mutex_init(&uart_mutex, NULL);
+	pthread_cond_init(&uart_cond, NULL);
+
 	ret = init_uart();
 	if (ret == false) {
 		return false;
@@ -182,12 +204,35 @@ bool init_bg96() {
 }
 
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
-	printk("received cmd: %s\n", cmd);
-	printk("uart_tx begin:\n");
-	int ret = uart_tx(uart_dev, "ATI\r", 4, 100);
-	printk("uart_tx end, ret = %d:\n", ret);
-	k_msleep(500);
-	k_msleep(SLEEP_TIME_MS*2);
+	gambi_counter = 0;
+	if (cmd_len > BG96_AT_CMD_MAX_LEN) {
+		return 0;
+	}
 
-	return 0;
+	/* Lock in order to block calling thread while waiting for the UART response */
+	pthread_mutex_lock(&uart_mutex);
+
+	int ret;
+	char send_cmd[BG96_AT_CMD_MAX_LEN];
+	char send_cmd_len = cmd_len + 1;
+
+	printk("received cmd: %s\n", cmd);
+
+	memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN);
+	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
+	memcpy(send_cmd, cmd, cmd_len);
+	send_cmd[cmd_len] = '\r';
+
+	ret = uart_tx(uart_dev, send_cmd, send_cmd_len, 100);
+
+	printk("sleep until callback signals to wake up\n");
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	printk("woke up, continuing execution\n");
+
+	memcpy(cmd_resp, bg96_resp, bg96_resp_len);
+
+	pthread_mutex_unlock(&uart_mutex);
+
+	// TODO: set response to cmd_resp
+	return bg96_resp_len;
 }
