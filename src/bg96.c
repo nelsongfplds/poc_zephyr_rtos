@@ -225,7 +225,7 @@ uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
 
 	/* printk("received cmd: %s\n", cmd); */
 
-	/* memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN); */
+	memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN);
 	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
 	memcpy(send_cmd, cmd, cmd_len);
 	send_cmd[cmd_len] = '\r';

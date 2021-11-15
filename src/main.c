@@ -35,5 +35,21 @@ void main(void)
 		reps++;
 	}
 
+	printk("\n\nGet GMI\n");
+	send_at_command("AT+GMI", strlen("AT+GMI"), rsp);
+	k_msleep(10000);
+	printk("\n\nGet GMM\n");
+	send_at_command("AT+GMM", strlen("AT+GMM"), rsp);
+	k_msleep(10000);
+	printk("\n\nGet ERR\n");
+	send_at_command("AT+ERR", strlen("AT+ERR"), rsp);
+	k_msleep(10000);
+	printk("\n\nGet GMR\n");
+	send_at_command("AT+GMR", strlen("AT+GMR"), rsp);
+	k_msleep(10000);
+	printk("\n\nGet IMEI\n");
+	send_at_command("AT+GSN", strlen("AT+GSN"), rsp);
+	k_msleep(10000);
+
 	printk("Exiting main\n");
 }
