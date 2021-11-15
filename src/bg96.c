@@ -1,7 +1,6 @@
 #include "bg96.h"
 
 /* Statics */
-static uint8_t gambi_counter = 0; //FIXME: workaround
 static pthread_mutex_t uart_mutex;
 static pthread_cond_t uart_cond;
 static const struct device *uart_dev;
@@ -28,14 +27,11 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			break;
 		case UART_RX_RDY:
 			printk("UART_RX_RDY\n");
-			gambi_counter++;
 			memcpy(bg96_resp, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			bg96_resp_len = evt->data.rx.len;
 			printk("[UART_CALLBACK]: %s\n", bg96_resp);
-			/* if (gambi_counter >= 2) { */
-				printk("signal wakeup to sleeping thread\n");
-				pthread_cond_signal(&uart_cond);
-			/* } */
+			printk("signal wakeup to sleeping thread\n");
+			pthread_cond_signal(&uart_cond);
 			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
 			/* printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]); */
 			break;
@@ -200,10 +196,11 @@ bool init_bg96() {
 	if (ret == false) {
 		return false;
 	}
+	printk("Sleeping for 10s to power up the modem...\n");
 	k_msleep(10000);
 
 	char rsp[100];
-	printk("Sending ATE0...\n");
+	printk("Sending ATE0 to disable echo and allow thread synchronization...\n");
 	send_at_command("ATE0", 4, rsp);
 	k_msleep(10000);
 
@@ -218,7 +215,6 @@ uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
 	/* Lock in order to block calling thread while waiting for the UART response */
 	pthread_mutex_lock(&uart_mutex);
 
-	gambi_counter = 0;
 	int ret;
 	char send_cmd[BG96_AT_CMD_MAX_LEN];
 	char send_cmd_len = cmd_len + 1;
