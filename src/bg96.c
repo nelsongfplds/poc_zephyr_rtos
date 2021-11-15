@@ -27,9 +27,10 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			break;
 		case UART_RX_RDY:
 			printk("UART_RX_RDY\n");
+			printk("\n\n\n\nOFFSET: %d\n\n\n\n", evt->data.rx.offset);
 			memcpy(bg96_resp, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			bg96_resp_len = evt->data.rx.len;
-			/* printk("[UART_CALLBACK]: %s\n", bg96_resp); */
+			printk("[UART_CALLBACK]: %s\n", bg96_resp);
 			printk("signal wakeup to sleeping thread\n");
 			pthread_cond_signal(&uart_cond);
 			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
@@ -176,6 +177,19 @@ static bool init_gpio0() {
 	return true;
 }
 
+static void setup_cat_m1() {
+	char rsp[100];
+
+	memset(rsp, 0, 100);
+
+	send_at_command("AT+QCFG=\"nwscanseq\",01,1", strlen("AT+QCFG=\"nwscanseq\",01,1"), NULL);
+	send_at_command("AT+QCFG=\"nwscanmode\",0,1", strlen("AT+QCFG=\"nwscanmode\",0,1"), NULL);
+	send_at_command("AT+QCFG=\"iotopmode\",0,1", strlen("AT+QCFG=\"iotopmode\",0,1"), NULL);
+	send_at_command("AT+QCFG=\"band\",f,8000004,8000004,1", strlen("AT+QCFG=\"band\",f,8000004,8000004,1"), NULL);
+	send_at_command("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\"", strlen("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\""), NULL);
+	printk("==== LTE-CAT-M1 and 2G networks initialized ====\n");
+}
+
 bool init_bg96() {
 	bool ret;
 
@@ -204,6 +218,8 @@ bool init_bg96() {
 	send_at_command("ATE0", 4, rsp);
 	k_msleep(10000);
 
+	setup_cat_m1();
+
 	return true;
 }
 
@@ -230,9 +246,12 @@ uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
 	pthread_cond_wait(&uart_cond, &uart_mutex);
 	/* woke up, continuing execution */
 
-	memcpy(cmd_resp, bg96_resp, bg96_resp_len);
+	if (cmd_resp != NULL) {
+		memcpy(cmd_resp, bg96_resp, bg96_resp_len);
+	}
 
 	pthread_mutex_unlock(&uart_mutex);
 
 	return bg96_resp_len;
 }
+
