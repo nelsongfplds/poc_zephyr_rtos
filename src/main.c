@@ -17,7 +17,7 @@ void main(void)
 
 	printk("Devices initialized!\n");
 	memset(send_buffer, 0, RING_BUFFER_SIZE);
-	memcpy(send_buffer, "ATI\r", 4);
+	memcpy(send_buffer, "ATI", 3);
 
 	k_msleep(SLEEP_TIME_MS*2);
 
