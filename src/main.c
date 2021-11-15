@@ -23,6 +23,7 @@ void main(void)
 
 	int reps = 0;
 	char rsp[100];
+	memset(rsp, 0, 100);
 	printk("Begin main loop\n");
 	while (reps <= 1) {
 		printk("Iteration: %d\n", reps);
@@ -35,20 +36,30 @@ void main(void)
 		reps++;
 	}
 
+	memset(rsp, 0, 100);
 	printk("\n\nGet GMI\n");
 	send_at_command("AT+GMI", strlen("AT+GMI"), rsp);
+		printk("main, returned: %s\n", rsp);
 	k_msleep(10000);
+	memset(rsp, 0, 100);
 	printk("\n\nGet GMM\n");
 	send_at_command("AT+GMM", strlen("AT+GMM"), rsp);
+		printk("main, returned: %s\n", rsp);
 	k_msleep(10000);
+	memset(rsp, 0, 100);
 	printk("\n\nGet ERR\n");
 	send_at_command("AT+ERR", strlen("AT+ERR"), rsp);
+		printk("main, returned: %s\n", rsp);
 	k_msleep(10000);
+	memset(rsp, 0, 100);
 	printk("\n\nGet GMR\n");
 	send_at_command("AT+GMR", strlen("AT+GMR"), rsp);
+		printk("main, returned: %s\n", rsp);
 	k_msleep(10000);
+	memset(rsp, 0, 100);
 	printk("\n\nGet IMEI\n");
 	send_at_command("AT+GSN", strlen("AT+GSN"), rsp);
+		printk("main, returned: %s\n", rsp);
 	k_msleep(10000);
 
 	printk("Exiting main\n");
