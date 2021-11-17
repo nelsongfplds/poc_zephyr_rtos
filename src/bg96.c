@@ -33,8 +33,6 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			printk("[UART_CALLBACK]: %s\n", bg96_resp);
 			printk("signal wakeup to sleeping thread\n");
 			pthread_cond_signal(&uart_cond);
-			/* printk("recv_buffer: %s\n", (char*) recv_buffer); */
-			/* printk("[@rys] len: %d buff: %s\n", evt->data.rx.len, &evt->data.rx.buf[evt->data.rx.offset]); */
 			break;
 		case UART_RX_BUF_REQUEST:
 			printk("UART_RX_BUF_REQUEST\n");
@@ -151,21 +149,6 @@ static bool init_gpio0() {
 		printk("Error configuring MDM_W_DISABLE_PIN: %d", ret);
 		return false;
 	}
-
-	//TODO: REMOVE?
-	/* /1* RTS pin *1/ */
-	/* ret = gpio_pin_configure(gpio_dev, 7, GPIO_OUTPUT_INACTIVE); */
-	/* if (ret < 0) { */
-	/* 	printk("Error configuring RTS: %d", ret); */
-	/* } */
-	/* /1* CTS pin *1/ */
-	/* ret = gpio_pin_configure(gpio_dev, 11, GPIO_OUTPUT_INACTIVE); */
-	/* if (ret < 0) { */
-	/* 	printk("Error configuring CTS: %d", ret); */
-	/* } */
-	/* gpio_pin_set(gpio_dev, 7, 0); */
-	/* gpio_pin_set(gpio_dev, 11, 0); */
-	/* k_msleep(1000); */
 
 	gpio_pin_set(gpio0_dev, MDM_RST_PIN, 0);
 	gpio_pin_set(gpio0_dev, MDM_W_DISABLE_PIN, 0);
