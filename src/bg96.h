@@ -41,6 +41,7 @@
 
 /* Methods */
 bool init_bg96();
+bool server_connect();
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
 
 #endif /* GEOCAN_BG96 */

@@ -206,6 +206,69 @@ bool init_bg96() {
 	return true;
 }
 
+static bool network_registration() {
+	char rsp[200];
+
+	memset(rsp, 0, 200);
+	send_at_command("AT+CEREG?", strlen("AT+CEREG?"), rsp);
+	if (strstr(rsp, "+CEREG: 0,1") != NULL) {
+		return true;
+	}
+
+	memset(rsp, 0, 200);
+	send_at_command("AT+CGREG?", strlen("AT+CGREG?"), rsp);
+	if (strstr(rsp, "+CGREG: 0,1") != NULL) {
+		return true;
+	}
+
+	return false;
+}
+
+static void init_mqtt () {
+	send_at_command("AT+QMTCFG=\"version\",0,4", strlen("AT+QMTCFG=\"version\",0,4"), NULL);
+	send_at_command("AT+QMTCFG=\"keepalive\",0,60", strlen("AT+QMTCFG=\"keepalive\",0,60"), NULL);
+	send_at_command("AT+QSSLCFG=\"ignorelocaltime\",2,1", strlen("AT+QSSLCFG=\"ignorelocaltime\",2,1"), NULL);
+	send_at_command("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF", strlen("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF"), NULL);
+	send_at_command("AT+QMTCFG=\"SSL\",0,1,2", strlen("AT+QMTCFG=\"SSL\",0,1,2"), NULL);
+	send_at_command("AT+QSSLCFG=\"seclevel\",2,0", strlen("AT+QSSLCFG=\"seclevel\",2,0"), NULL);
+	printk("==== MQTT stack initialized ====\n\n");
+}
+
+//TODO: place this after comm closure
+static void deinit_mqtt() {
+	send_at_command("AT+QMTCLOSE=0", strlen("AT+QMTCLOSE=0"), NULL);
+}
+
+bool mqtt_connect() {
+	char auth_rsp[200];
+	char conn_rsp[200];
+	int port = 8883;
+
+	memset(auth_rsp, 0, 200);
+	memset(conn_rsp, 0, 200);
+	send_at_command("", strlen(""), conn_rsp);
+	send_at_command("", strlen(""), auth_rsp);
+
+	if (strstr(auth_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(conn_rsp, "+QMTOPEN: 0,0") != NULL) {
+		return true;
+	}
+
+	return false;
+}
+
+bool server_connect() {
+	bool ret;
+
+	ret = network_registration();
+	if (ret == false) {
+		return false;
+	}
+
+	init_mqtt();
+
+	return mqtt_connect();
+}
+
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
 	if (cmd_len > BG96_AT_CMD_MAX_LEN) {
 		return 0;
