@@ -247,12 +247,12 @@ bool mqtt_connect() {
 	memset(auth_rsp, 0, 200);
 	memset(conn_rsp, 0, 200);
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
-	send_at_command("", strlen(""), conn_rsp);
-	send_at_command("", strlen(""), auth_rsp);
+	/* send_at_command("", strlen(""), conn_rsp); */
+	/* send_at_command("", strlen(""), auth_rsp); */
 
-	if (strstr(auth_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(conn_rsp, "+QMTOPEN: 0,0") != NULL) {
-		return true;
-	}
+	/* if (strstr(auth_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(conn_rsp, "+QMTOPEN: 0,0") != NULL) { */
+	/* 	return true; */
+	/* } */
 
 	return false;
 }
