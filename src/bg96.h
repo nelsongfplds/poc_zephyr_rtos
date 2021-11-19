@@ -39,6 +39,11 @@
 #error "Unsupported board: gpio1 devicetree node is not defined"
 #endif
 
+/* Structs */
+struct uart_params {
+	bool should_timeout;
+};
+
 /* Methods */
 bool init_bg96();
 bool server_connect();

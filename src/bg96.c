@@ -9,6 +9,7 @@ static const struct device *gpio1_dev;
 static uint8_t recv_buffer[RING_BUFFER_SIZE]; //TODO: Change to ring buffer
 static uint8_t bg96_resp[BG96_AT_RSP_MAX_LEN];
 static uint32_t bg96_resp_len = 0;
+static struct uart_params uart_params;
 
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
 	int ret;
@@ -27,12 +28,15 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			break;
 		case UART_RX_RDY:
 			printk("UART_RX_RDY\n");
-			printk("\n\n\n\nOFFSET: %d\n\n\n\n", evt->data.rx.offset);
+			/* printk("\n\n\n\nOFFSET: %d\n\n\n\n", evt->data.rx.offset); */
 			memcpy(bg96_resp, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			bg96_resp_len = evt->data.rx.len;
 			printk("[UART_CALLBACK]: %s\n", bg96_resp);
 			printk("signal wakeup to sleeping thread\n");
 			pthread_cond_signal(&uart_cond);
+			if (uart_params.should_timeout) {
+				//thread cancel
+			}
 			break;
 		case UART_RX_BUF_REQUEST:
 			printk("UART_RX_BUF_REQUEST\n");
@@ -65,7 +69,8 @@ static bool init_uart() {
 	}
 
 	memset(recv_buffer, 0, RING_BUFFER_SIZE);
-	uart_callback_set(uart_dev, uart_callback, NULL);
+	memset(&uart_params, 0, sizeof(struct uart_params));
+	uart_callback_set(uart_dev, uart_callback, &uart_params);
 	uart_rx_enable(uart_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
 	return true;
@@ -239,7 +244,7 @@ static void deinit_mqtt() {
 	send_at_command("AT+QMTCLOSE=0", strlen("AT+QMTCLOSE=0"), NULL);
 }
 
-bool mqtt_connect() {
+static bool mqtt_connect() {
 	char auth_rsp[200];
 	char conn_rsp[200];
 	int port = 8883;
@@ -247,8 +252,10 @@ bool mqtt_connect() {
 	memset(auth_rsp, 0, 200);
 	memset(conn_rsp, 0, 200);
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
-	/* send_at_command("", strlen(""), conn_rsp); */
-	/* send_at_command("", strlen(""), auth_rsp); */
+	printk("ATTEMPT TO OPEN CONNECTION\n");
+	send_at_command("AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883", strlen("AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883"), conn_rsp);
+	printk("ATTEMPT TO CONNECT TO AZURE\n");
+	send_at_command("AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net\%2Fdevices\%2Fdev0&sig=ip9ZI5NIKC2ucs6HFd01w2VsCO7whCdmcbAHQ\%2FF64L4\%3D&se=1622081518\"", strlen(""), auth_rsp);
 
 	/* if (strstr(auth_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(conn_rsp, "+QMTOPEN: 0,0") != NULL) { */
 	/* 	return true; */
