@@ -245,19 +245,20 @@ static void deinit_mqtt() {
 }
 
 static bool mqtt_connect() {
-	char auth_rsp[200];
 	char conn_rsp[200];
-	int port = 8883;
+	char open_rsp[200];
+	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net\%2Fdevices\%2Fdev0&sig=tK\%2BpCrjLHbJ5ghCbyo\%2ByZ7I9\%2BSjUOJnhhInfF8JTfNE\%3D&se=1642703697\"";
+	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
 
-	memset(auth_rsp, 0, 200);
 	memset(conn_rsp, 0, 200);
+	memset(open_rsp, 0, 200);
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
 	printk("ATTEMPT TO OPEN CONNECTION\n");
-	send_at_command("AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883", strlen("AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883"), conn_rsp);
-	printk("ATTEMPT TO CONNECT TO AZURE\n");
-	send_at_command("AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net\%2Fdevices\%2Fdev0&sig=ip9ZI5NIKC2ucs6HFd01w2VsCO7whCdmcbAHQ\%2FF64L4\%3D&se=1622081518\"", strlen(""), auth_rsp);
+	send_at_command(open_cmd, strlen(open_cmd), open_rsp);
+	/* printk("ATTEMPT TO CONNECT TO AZURE\n"); */
+	/* send_at_command(conn_cmd, strlen(conn_cmd), conn_rsp); */
 
-	/* if (strstr(auth_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(conn_rsp, "+QMTOPEN: 0,0") != NULL) { */
+	/* if (strstr(conn_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(open_rsp, "+QMTOPEN: 0,0") != NULL) { */
 	/* 	return true; */
 	/* } */
 
