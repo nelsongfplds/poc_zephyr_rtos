@@ -245,24 +245,42 @@ static void deinit_mqtt() {
 }
 
 static bool mqtt_connect() {
-	char conn_rsp[200];
-	char open_rsp[200];
-	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net\%2Fdevices\%2Fdev0&sig=tK\%2BpCrjLHbJ5ghCbyo\%2ByZ7I9\%2BSjUOJnhhInfF8JTfNE\%3D&se=1642703697\"";
+	printk("mqtt_connect() called\n");
 	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
+	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
+	/* printk("conn cmd: %s\n\n", conn_cmd); */
 
-	memset(conn_rsp, 0, 200);
-	memset(open_rsp, 0, 200);
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
 	printk("ATTEMPT TO OPEN CONNECTION\n");
-	send_at_command(open_cmd, strlen(open_cmd), open_rsp);
-	/* printk("ATTEMPT TO CONNECT TO AZURE\n"); */
-	/* send_at_command(conn_cmd, strlen(conn_cmd), conn_rsp); */
+	send_at_command(open_cmd, strlen(open_cmd), NULL);
+
+	printk("Sleep until QMTOPEN returns\n");
+	pthread_mutex_lock(&uart_mutex);
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	printk("QMTOPEN returned! buffer: %s\n", bg96_resp);
+	if (strstr(bg96_resp, "+QMTOPEN: 0,0") == NULL) {
+		return false;
+	}
+	pthread_mutex_unlock(&uart_mutex);
+
+
+	printk("ATTEMPT TO CONNECT TO AZURE\n");
+	send_at_command(conn_cmd, strlen(conn_cmd), NULL);
+
+	printk("Sleep until QMTCONN returns\n");
+	pthread_mutex_lock(&uart_mutex);
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	printk("QMTCONN returned! buffer: %s\n", bg96_resp);
+	if (strstr(bg96_resp, "+QMTCONN: 0,0,0") == NULL) {
+		return false;
+	}
+	pthread_mutex_unlock(&uart_mutex);
 
 	/* if (strstr(conn_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(open_rsp, "+QMTOPEN: 0,0") != NULL) { */
 	/* 	return true; */
 	/* } */
 
-	return false;
+	return true;
 }
 
 bool server_connect() {
@@ -274,6 +292,7 @@ bool server_connect() {
 	}
 
 	init_mqtt();
+	printk("Need to call mqtt_connect\n");
 
 	return mqtt_connect();
 }
