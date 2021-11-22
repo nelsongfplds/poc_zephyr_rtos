@@ -9,7 +9,6 @@ static const struct device *gpio1_dev;
 static uint8_t recv_buffer[RING_BUFFER_SIZE]; //TODO: Change to ring buffer
 static uint8_t bg96_resp[BG96_AT_RSP_MAX_LEN];
 static uint32_t bg96_resp_len = 0;
-static struct uart_params uart_params;
 
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
 	int ret;
@@ -34,9 +33,6 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			printk("[UART_CALLBACK]: %s\n", bg96_resp);
 			printk("signal wakeup to sleeping thread\n");
 			pthread_cond_signal(&uart_cond);
-			if (uart_params.should_timeout) {
-				//thread cancel
-			}
 			break;
 		case UART_RX_BUF_REQUEST:
 			printk("UART_RX_BUF_REQUEST\n");
@@ -69,8 +65,7 @@ static bool init_uart() {
 	}
 
 	memset(recv_buffer, 0, RING_BUFFER_SIZE);
-	memset(&uart_params, 0, sizeof(struct uart_params));
-	uart_callback_set(uart_dev, uart_callback, &uart_params);
+	uart_callback_set(uart_dev, uart_callback, NULL);
 	uart_rx_enable(uart_dev, recv_buffer, RING_BUFFER_SIZE, 100);
 
 	return true;
@@ -248,7 +243,6 @@ static bool mqtt_connect() {
 	printk("mqtt_connect() called\n");
 	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
 	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
-	/* printk("conn cmd: %s\n\n", conn_cmd); */
 
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
 	printk("ATTEMPT TO OPEN CONNECTION\n");
@@ -275,10 +269,6 @@ static bool mqtt_connect() {
 		return false;
 	}
 	pthread_mutex_unlock(&uart_mutex);
-
-	/* if (strstr(conn_rsp, "+QMTCONN: 0,0,0") != NULL && strstr(open_rsp, "+QMTOPEN: 0,0") != NULL) { */
-	/* 	return true; */
-	/* } */
 
 	return true;
 }
