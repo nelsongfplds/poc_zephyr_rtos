@@ -19,6 +19,7 @@ void main(void)
 	int ret = server_connect();
 	if (ret) {
 		printk("Connected\n");
+		send_payload("testetesteteste", strlen("testetesteteste"));
 	} else {
 		printk("Not connected\n");
 	}

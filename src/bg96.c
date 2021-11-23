@@ -173,39 +173,6 @@ static void setup_cat_m1() {
 	printk("==== LTE-CAT-M1 and 2G networks initialized ====\n");
 }
 
-bool init_bg96() {
-	bool ret;
-
-	pthread_mutex_init(&uart_mutex, NULL);
-	pthread_cond_init(&uart_cond, NULL);
-
-	ret = init_uart();
-	if (ret == false) {
-		return false;
-	}
-
-	ret = init_gpio0();
-	if (ret == false) {
-		return false;
-	}
-
-	ret = init_gpio1();
-	if (ret == false) {
-		return false;
-	}
-	printk("Sleeping for 10s to power up the modem...\n");
-	k_msleep(10000);
-
-	char rsp[100];
-	printk("Sending ATE0 to disable echo and allow thread synchronization...\n");
-	send_at_command("ATE0", 4, rsp);
-	k_msleep(10000);
-
-	setup_cat_m1();
-
-	return true;
-}
-
 static bool network_registration() {
 	char rsp[200];
 
@@ -273,6 +240,39 @@ static bool mqtt_connect() {
 	return true;
 }
 
+bool init_bg96() {
+	bool ret;
+
+	pthread_mutex_init(&uart_mutex, NULL);
+	pthread_cond_init(&uart_cond, NULL);
+
+	ret = init_uart();
+	if (ret == false) {
+		return false;
+	}
+
+	ret = init_gpio0();
+	if (ret == false) {
+		return false;
+	}
+
+	ret = init_gpio1();
+	if (ret == false) {
+		return false;
+	}
+	printk("Sleeping for 10s to power up the modem...\n");
+	k_msleep(10000);
+
+	char rsp[100];
+	printk("Sending ATE0 to disable echo and allow thread synchronization...\n");
+	send_at_command("ATE0", 4, rsp);
+	k_msleep(10000);
+
+	setup_cat_m1();
+
+	return true;
+}
+
 bool server_connect() {
 	bool ret;
 
@@ -285,6 +285,30 @@ bool server_connect() {
 	printk("Need to call mqtt_connect\n");
 
 	return mqtt_connect();
+}
+
+bool send_payload(char *payload, uint32_t payload_len) {
+	printk("Begin routine to send payload...\n");
+
+	char cmd[] = "AT+QMTPUB=0,0,0,0,\"devices/dev0/messages/events/geoKegEvents/\"";
+	send_at_command(cmd, strlen(cmd), NULL);
+
+	printk("QMTPUB returned! buffer: %s\n", bg96_resp);
+	if (strstr(bg96_resp, ">") == NULL) {
+		printk("Failed to send payload\n");
+		return false;
+	}
+	printk("Send payload...\n");
+
+	char send_cmd[BG96_AT_CMD_MAX_LEN];
+	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
+	/* printk("payload: %s, size: %u\n", payload, payload_len); */
+	/* memcpy(send_cmd, payload, payload_len); */
+	/* send_cmd[size] = '\x1A'; */
+
+	printk("send_cmd: %s\n", send_cmd);
+	printk("after free\n");
+	return true;
 }
 
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {

@@ -2,6 +2,7 @@
 #define GEOCAN_BG96
 
 /* Includes */
+#include <stdlib.h>
 #include <pthread.h>
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
@@ -42,6 +43,7 @@
 /* Methods */
 bool init_bg96();
 bool server_connect();
+bool send_payload(char *payload, uint32_t payload_len);
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
 
 #endif /* GEOCAN_BG96 */
