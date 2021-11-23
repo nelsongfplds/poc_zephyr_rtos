@@ -292,6 +292,14 @@ bool server_connect() {
 bool send_payload(char *payload, uint32_t payload_len) {
 	printk("Begin routine to send payload...\n");
 
+	char send_cmd[BG96_AT_CMD_MAX_LEN];
+
+	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
+	printk("payload: %s, size: %u\n", payload, payload_len);
+	memcpy(send_cmd, payload, payload_len);
+	send_cmd[payload_len] = '\x1A';
+	printk("send_cmd: %s\n", send_cmd);
+
 	char cmd[] = "AT+QMTPUB=0,0,0,0,\"devices/dev0/messages/events/geoKegEvents/\"";
 	send_at_command(cmd, strlen(cmd), NULL);
 
@@ -300,16 +308,10 @@ bool send_payload(char *payload, uint32_t payload_len) {
 		printk("Failed to send payload\n");
 		return false;
 	}
+
 	printk("Send payload...\n");
+	send_at_command(send_cmd, strlen(send_cmd), NULL);
 
-	char send_cmd[BG96_AT_CMD_MAX_LEN];
-	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
-	/* printk("payload: %s, size: %u\n", payload, payload_len); */
-	/* memcpy(send_cmd, payload, payload_len); */
-	/* send_cmd[size] = '\x1A'; */
-
-	printk("send_cmd: %s\n", send_cmd);
-	printk("after free\n");
 	return true;
 }
 
