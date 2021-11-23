@@ -2,9 +2,10 @@
 
 #define PAYLOAD_MAX_SIZE 600
 
-void set_payload(char *buffer,
-		 char *imei,
-		 char *vbatt) {
+char *set_payload(char *imei, char *vbatt) {
+	char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char));
+	memset(buffer, 0, PAYLOAD_MAX_SIZE);
+
 	snprintk(buffer, PAYLOAD_MAX_SIZE,
 		 "{"
 			 "\"id_can\":\"%s\","
@@ -16,16 +17,19 @@ void set_payload(char *buffer,
 	"sku_dev_0",
 	imei,
 	vbatt);
+
+	return buffer;
 }
 
 void main(void)
 {
 	printk("Hello\n");
 
-	char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char));
+	/* char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char)); */
 	/* char buffer[PAYLOAD_MAX_SIZE]; */
-	memset(buffer, 0, PAYLOAD_MAX_SIZE);
-	set_payload(buffer, "abc123456", "9100mV");
+	/* memset(buffer, 0, PAYLOAD_MAX_SIZE); */
+	char *buffer = set_payload("abc123456", "9100mV");
+	/* set_payload(buffer, "abc123456", "9100mV"); */
 	printk("%s\n", buffer);
 	free(buffer);
 	/* if (init_board_sensors() == false) { */
