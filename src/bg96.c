@@ -220,6 +220,7 @@ static bool mqtt_connect() {
 	pthread_cond_wait(&uart_cond, &uart_mutex);
 	printk("QMTOPEN returned! buffer: %s\n", bg96_resp);
 	if (strstr(bg96_resp, "+QMTOPEN: 0,0") == NULL) {
+		pthread_mutex_unlock(&uart_mutex);
 		return false;
 	}
 	pthread_mutex_unlock(&uart_mutex);
@@ -233,6 +234,7 @@ static bool mqtt_connect() {
 	pthread_cond_wait(&uart_cond, &uart_mutex);
 	printk("QMTCONN returned! buffer: %s\n", bg96_resp);
 	if (strstr(bg96_resp, "+QMTCONN: 0,0,0") == NULL) {
+		pthread_mutex_unlock(&uart_mutex);
 		return false;
 	}
 	pthread_mutex_unlock(&uart_mutex);
