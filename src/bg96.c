@@ -207,7 +207,7 @@ static void deinit_mqtt() {
 }
 
 static bool mqtt_connect() {
-	printk("mqtt_connect() called\n");
+	printk("mqtt_connect() called\n"); //TODO:REMOVE
 	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
 	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
 
@@ -284,9 +284,10 @@ bool server_connect() {
 	}
 
 	init_mqtt();
-	printk("Need to call mqtt_connect\n");
-
-	return mqtt_connect();
+	printk("Need to call mqtt_connect\n"); //TODO:REMOVE
+	ret = mqtt_connect();
+	/* deinit_mqtt(); */
+	return ret;
 }
 
 bool send_payload(char *payload, uint32_t payload_len) {
@@ -311,6 +312,16 @@ bool send_payload(char *payload, uint32_t payload_len) {
 
 	printk("Send payload...\n");
 	send_at_command(send_cmd, strlen(send_cmd), NULL);
+
+	printk("Sleep until QMTPUB returns\n");
+	pthread_mutex_lock(&uart_mutex);
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	printk("QMTPUB returned! buffer: %s\n", bg96_resp);
+	if (strstr(bg96_resp, "+QMTPUB: 0,0,0") == NULL) {
+		pthread_mutex_unlock(&uart_mutex);
+		return false;
+	}
+	pthread_mutex_unlock(&uart_mutex);
 
 	return true;
 }
