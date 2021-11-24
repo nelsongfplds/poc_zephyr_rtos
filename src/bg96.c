@@ -101,41 +101,6 @@ static bool init_gpio0() {
 		return false;
 	}
 
-	/* status pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_STATUS_PIN, GPIO_INPUT);
-	if (ret < 0) {
-		printk("Error configuring MDM_STATUS_PIN: %d", ret);
-		return false;
-	}
-
-	/* dtr pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_DTR_PIN, GPIO_INPUT);
-	if (ret < 0) {
-		printk("Error configuring MDM_DTR_PIN: %d", ret);
-		return false;
-	}
-
-	/* ap ready pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_AP_RDY_PIN, GPIO_INPUT);
-	if (ret < 0) {
-		printk("Error configuring MDM_AP_RDY_PIN: %d", ret);
-		return false;
-	}
-
-	/* psm pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_PSM_PIN, GPIO_INPUT);
-	if (ret < 0) {
-		printk("Error configuring MDM_PSM_PIN: %d", ret);
-		return false;
-	}
-
-	/* reset pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_RST_PIN, GPIO_OUTPUT_INACTIVE);
-	if (ret < 0) {
-		printk("Error configuring MDM_RST_PIN: %d", ret);
-		return false;
-	}
-
 	/* power pin */
 	ret = gpio_pin_configure(gpio0_dev, MDM_PWR_PIN, GPIO_OUTPUT_ACTIVE);
 	if (ret < 0) {
@@ -143,15 +108,6 @@ static bool init_gpio0() {
 		return false;
 	}
 
-	/* w disable pin */
-	ret = gpio_pin_configure(gpio0_dev, MDM_W_DISABLE_PIN, GPIO_OUTPUT_INACTIVE);
-	if (ret < 0) {
-		printk("Error configuring MDM_W_DISABLE_PIN: %d", ret);
-		return false;
-	}
-
-	gpio_pin_set(gpio0_dev, MDM_RST_PIN, 0);
-	gpio_pin_set(gpio0_dev, MDM_W_DISABLE_PIN, 0);
 	gpio_pin_set(gpio0_dev, MDM_PWR_PIN, 0);
 	k_msleep(60);
 	gpio_pin_set(gpio0_dev, MDM_PWR_PIN, 1);
