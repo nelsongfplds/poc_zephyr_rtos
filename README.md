@@ -7,3 +7,6 @@ The sensors present on the board consist of:
 - Accelerometer (LSM6DSM)
 - Pressure sensor (Interlink FSR 400)
 - Temperature / humidity sensor (SHTC3)
+
+In order to sync with BG96, there is need to remove the RTS/CTS  
+pins from the board dts.

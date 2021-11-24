@@ -8,6 +8,15 @@
 	};
 };
 
+&uart0 {
+	/delete-property/ rts-pin;
+	/delete-property/ cts-pin;
+};
+
+&quectel_bg9x {
+	status = "disabled";
+};
+
 / {
 	aliases {
 		shtc3 = &shtc3;
