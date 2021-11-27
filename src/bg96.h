@@ -9,6 +9,7 @@
 #include <sys/ring_buffer.h>
 
 /* Defines */
+#define TIMEOUT_S 10
 #define SLEEP_TIME_MS   5000
 #define RING_BUFFER_SIZE 1024
 #define BG96_AT_CMD_MAX_LEN 400

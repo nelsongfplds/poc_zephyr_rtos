@@ -163,9 +163,14 @@ static void deinit_mqtt() {
 }
 
 static bool mqtt_connect() {
-	printk("mqtt_connect() called\n"); //TODO:REMOVE
+	int timed_ret;
+	bool ret = true;
+	struct timespec to;
 	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
 	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
+
+	clock_gettime(CLOCK_MONOTONIC, &to);
+	to.tv_sec += TIMEOUT_S;
 
 	// TODO: need a way to timeout the next two commands, maybe change to pthread_cond_timedwait
 	printk("ATTEMPT TO OPEN CONNECTION\n");
@@ -173,11 +178,16 @@ static bool mqtt_connect() {
 
 	printk("Sleep until QMTOPEN returns\n");
 	pthread_mutex_lock(&uart_mutex);
-	pthread_cond_wait(&uart_cond, &uart_mutex);
+	pthread_cond_timedwait(&uart_cond, &uart_mutex, &to);
+	if (timed_ret == ETIMEDOUT) {
+		printk("Time out condition\n");
+		ret = false;
+		goto END;
+	}
 	printk("QMTOPEN returned! buffer: %s\n", bg96_resp);
 	if (strstr(bg96_resp, "+QMTOPEN: 0,0") == NULL) {
-		pthread_mutex_unlock(&uart_mutex);
-		return false;
+		ret = false;
+		goto END;
 	}
 	pthread_mutex_unlock(&uart_mutex);
 
@@ -187,15 +197,22 @@ static bool mqtt_connect() {
 
 	printk("Sleep until QMTCONN returns\n");
 	pthread_mutex_lock(&uart_mutex);
-	pthread_cond_wait(&uart_cond, &uart_mutex);
+	pthread_cond_timedwait(&uart_cond, &uart_mutex, &to);
+	if (timed_ret == ETIMEDOUT) {
+		printk("Time out condition\n");
+		ret = false;
+		goto END;
+	}
 	printk("QMTCONN returned! buffer: %s\n", bg96_resp);
 	if (strstr(bg96_resp, "+QMTCONN: 0,0,0") == NULL) {
-		pthread_mutex_unlock(&uart_mutex);
-		return false;
+		ret = false;
+		goto END;
 	}
+
+END:
 	pthread_mutex_unlock(&uart_mutex);
 
-	return true;
+	return ret;
 }
 
 bool init_bg96() {
