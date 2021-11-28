@@ -20,7 +20,6 @@ void main(void)
 		return;
 	}
 	printk("Devices initialized!\n");
-	/* k_msleep(SLEEP_TIME_MS*2); */
 
 	int batt_lvl;
 	char imei[IMEI_SIZE + 1];
@@ -34,24 +33,23 @@ void main(void)
 	shtc3_sensor_read(temp, ur);
 	batt_lvl = get_batt_reading();
 
-	printk("IMEI at MAIN: %s\n", imei);
-	printk("TEMP at MAIN: %s\n", temp);
-	printk("HUM at MAIN: %s\n", ur);
-	printk("VBATT at MAIN: %d\n", batt_lvl);
+	/* printk("IMEI at MAIN: %s\n", imei); */
+	/* printk("TEMP at MAIN: %s\n", temp); */
+	/* printk("HUM at MAIN: %s\n", ur); */
+	/* printk("VBATT at MAIN: %d\n", batt_lvl); */
 
+	/* char *buffer = set_payload(imei, batt_lvl, temp, ur); */
+	/* printk("%s\n", buffer); */
+
+	int ret = server_connect();
+	if (ret) {
+		printk("Connected\n");
 		char *buffer = set_payload(imei, batt_lvl, temp, ur);
 		printk("%s\n", buffer);
-
-	/* int ret = server_connect(); */
-	/* if (ret) { */
-	/* 	printk("Connected\n"); */
-	/* 	char *buffer = set_payload("abc123456", "9100mV"); */
-	/* 	printk("%s\n", buffer); */
-	/* 	printk("AA"); */
-	/* 	send_payload(buffer, strlen(buffer)); */
-	/* } else { */
-	/* 	printk("Not connected\n"); */
-	/* } */
+		send_payload(buffer, strlen(buffer));
+	} else {
+		printk("Not connected\n");
+	}
 
 	printk("Exiting main\n");
 }

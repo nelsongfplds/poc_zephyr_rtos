@@ -16,13 +16,13 @@ char *set_payload(char *imei, int vbatt, char *temp, char *ur) {
 			 "\"accel_dev\":\"%s\","
 			 "\"bat_val\":\"%d mv\""
 		 "}\x1A",
-	"-/-",
+	"-/-", //id sku
 	imei,
-	"-/-",
-	"-/-",
-	"-/-",
-	temp, //temp dev
-	ur, //ur dev
+	"-/-", //lat
+	"-/-", //long
+	"-/-", //weight dev
+	temp,
+	ur,
 	"-/-", //accel dev
 	vbatt);
 

@@ -224,7 +224,7 @@ void get_imei(char *imei) {
 
 	memset(ret, 0, 30);
 	memset(imei, 0, IMEI_SIZE + 1);
-	printk("\n\nGet IMEI\n");
+	/* printk("\n\nGet IMEI\n"); */
 	send_at_command("AT+GSN", strlen("AT+GSN"), ret);
 	memcpy(imei, &ret[2], IMEI_SIZE);
 }
@@ -255,9 +255,12 @@ bool init_bg96() {
 	char rsp[100];
 	printk("Sending ATE0 to disable echo and allow thread synchronization...\n");
 	send_at_command("ATE0", 4, rsp);
-	k_msleep(10000);
 
-	setup_cat_m1();
+	printk("Sleep until the OK arrives\n");
+	pthread_mutex_lock(&uart_mutex);
+	/* TODO: maybe pthread_cond_timedwait is safer here */
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	pthread_mutex_unlock(&uart_mutex);
 
 	return true;
 }
@@ -265,13 +268,14 @@ bool init_bg96() {
 bool server_connect() {
 	bool ret;
 
+	setup_cat_m1();
+
 	ret = network_registration();
 	if (ret == false) {
 		return false;
 	}
 
 	init_mqtt();
-	printk("Need to call mqtt_connect\n"); //TODO:REMOVE
 	ret = mqtt_connect();
 	/* deinit_mqtt(); */
 	return ret;
