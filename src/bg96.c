@@ -164,7 +164,11 @@ static void deinit_mqtt() {
 	send_at_command("AT+QMTCLOSE=0", strlen("AT+QMTCLOSE=0"), NULL);
 }
 
-static bool send_and_wait_response(char *cmd, uint32_t len, char *expected_resp, char *at_cmd) {
+static bool send_and_wait_response(char *cmd,
+				   uint32_t len,
+				   char *expected_resp,
+				   char *at_cmd,
+				   uint32_t timeout_sec) {
 	bool ret = true;
 	int cond_ret;
 	struct timespec to;
@@ -175,7 +179,7 @@ static bool send_and_wait_response(char *cmd, uint32_t len, char *expected_resp,
 
 	printk("Sleep until %s returns\n", at_cmd);
 	clock_gettime(CLOCK_MONOTONIC, &to);
-	to.tv_sec += TIMEOUT_S;
+	to.tv_sec += timeout_sec;
 	timed_out = true; // The function below is not following posix definition so this var is needed
 
 	cond_ret = pthread_cond_timedwait(&uart_cond, &uart_mutex, &to);
@@ -201,12 +205,14 @@ static bool mqtt_connect() {
 	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
 
 	printk("ATTEMPT TO OPEN CONNECTION\n");
-	if (send_and_wait_response(open_cmd, strlen(open_cmd), "+QMTOPEN: 0,0", "QMTOPEN") == false) {
+	if (send_and_wait_response(open_cmd, strlen(open_cmd), "+QMTOPEN: 0,0",
+				   "QMTOPEN", OPEN_CONN_TIMEOUT_S) == false) {
 		return false;
 	}
 
 	printk("ATTEMPT TO CONNECT TO AZURE\n");
-	if (send_and_wait_response(conn_cmd, strlen(conn_cmd), "+QMTCONN: 0,0,0", "QMTCONN") == false) {
+	if (send_and_wait_response(conn_cmd, strlen(conn_cmd), "+QMTCONN: 0,0,0",
+				   "QMTCONN", CONN_TIMEOUT_S) == false) {
 		return false;
 	}
 
