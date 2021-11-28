@@ -39,6 +39,9 @@ void main(void)
 	printk("HUM at MAIN: %s\n", ur);
 	printk("VBATT at MAIN: %d\n", batt_lvl);
 
+		char *buffer = set_payload("abc123456", batt_lvl, temp, ur);
+		printk("%s\n", buffer);
+
 	/* int ret = server_connect(); */
 	/* if (ret) { */
 	/* 	printk("Connected\n"); */

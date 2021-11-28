@@ -1,6 +1,6 @@
 #include "utils.h"
 
-char *set_payload(char *imei, char *vbatt) {
+char *set_payload(char *imei, int vbatt, char *temp, char *ur) {
 	char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char));
 	memset(buffer, 0, PAYLOAD_MAX_SIZE);
 
@@ -14,15 +14,15 @@ char *set_payload(char *imei, char *vbatt) {
 			 "\"temp_dev\":\"%s C\","
 			 "\"ur_dev\":\"%s %%\","
 			 "\"accel_dev\":\"%s\","
-			 "\"bat_val\":\"%s\""
+			 "\"bat_val\":\"%d mv\""
 		 "}\x1A",
 	"-/-",
 	imei,
 	"-/-",
 	"-/-",
 	"-/-",
-	"-/-", //temp dev
-	"-/-", //ur dev
+	temp, //temp dev
+	ur, //ur dev
 	"-/-", //accel dev
 	vbatt);
 
