@@ -226,8 +226,7 @@ void get_imei(char *imei) {
 	memset(imei, 0, IMEI_SIZE + 1);
 	printk("\n\nGet IMEI\n");
 	send_at_command("AT+GSN", strlen("AT+GSN"), ret);
-	memcpy(imei, &ret[1], IMEI_SIZE+1);
-	imei[IMEI_SIZE+1] = 0;
+	memcpy(imei, &ret[2], IMEI_SIZE);
 }
 
 bool init_bg96() {

@@ -23,23 +23,23 @@ void main(void)
 	/* k_msleep(SLEEP_TIME_MS*2); */
 
 	int batt_lvl;
-	/* char imei[IMEI_SIZE + 1]; */
+	char imei[IMEI_SIZE + 1];
 	char temp[TEMP_SENSOR_BUFF_LEN];
 	char ur[TEMP_SENSOR_BUFF_LEN];
 
 	memset(temp, 0, TEMP_SENSOR_BUFF_LEN);
 	memset(ur, 0, TEMP_SENSOR_BUFF_LEN);
 
-	/* get_imei(imei); */
+	get_imei(imei);
 	shtc3_sensor_read(temp, ur);
 	batt_lvl = get_batt_reading();
 
-	/* printk("IMEI at MAIN: %s\n", imei); */
+	printk("IMEI at MAIN: %s\n", imei);
 	printk("TEMP at MAIN: %s\n", temp);
 	printk("HUM at MAIN: %s\n", ur);
 	printk("VBATT at MAIN: %d\n", batt_lvl);
 
-		char *buffer = set_payload("abc123456", batt_lvl, temp, ur);
+		char *buffer = set_payload(imei, batt_lvl, temp, ur);
 		printk("%s\n", buffer);
 
 	/* int ret = server_connect(); */
