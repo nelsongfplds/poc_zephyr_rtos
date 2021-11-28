@@ -7,6 +7,7 @@
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
 #include <sys/ring_buffer.h>
+#include "server.h"
 
 /* Defines */
 #define OPEN_CONN_TIMEOUT_S (75+5)

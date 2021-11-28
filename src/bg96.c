@@ -201,9 +201,13 @@ END:
 }
 
 static bool mqtt_connect() {
-	char open_cmd[] = "AT+QMTOPEN=0,\"GEOKEG-DEV.azure-devices.net\",8883";
-	char conn_cmd[] = "AT+QMTCONN=0,\"dev0\",\"GEOKEG-DEV.azure-devices.net/dev0/?api-version=2018-06-30\",\"SharedAccessSignature sr=GEOKEG-DEV.azure-devices.net%2Fdevices%2Fdev0&sig=tK%2BpCrjLHbJ5ghCbyo%2ByZ7I9%2BSjUOJnhhInfF8JTfNE%3D&se=1642703697\"";
+	char open_cmd[70];
+	char conn_cmd[250];
 
+	memset(open_cmd, 0, 70);
+	memset(conn_cmd, 0, 250);
+
+	snprintk(open_cmd, 70, "AT+QMTOPEN=0,\"%s\",%d", SERVER_ADDR, SERVER_PORT);
 	printk("ATTEMPT TO OPEN CONNECTION\n");
 	if (send_and_wait_response(open_cmd, strlen(open_cmd), "+QMTOPEN: 0,0",
 				   "QMTOPEN", OPEN_CONN_TIMEOUT_S) == false) {
@@ -211,6 +215,7 @@ static bool mqtt_connect() {
 	}
 
 	printk("ATTEMPT TO CONNECT TO AZURE\n");
+	snprintk(conn_cmd, 250, "AT+QMTCONN=0,\"%s\",\"%s/%s/?api-version=2018-06-30\",\"%s\"", DEVICE_ID, SERVER_ADDR, DEVICE_ID, SIGNATURE);
 	if (send_and_wait_response(conn_cmd, strlen(conn_cmd), "+QMTCONN: 0,0,0",
 				   "QMTCONN", CONN_TIMEOUT_S) == false) {
 		return false;
