@@ -15,6 +15,7 @@
 #define RING_BUFFER_SIZE 1024
 #define BG96_AT_CMD_MAX_LEN 400
 #define BG96_AT_RSP_MAX_LEN 200 //TODO: Maybe resize this to a bigger number
+#define IMEI_SIZE 15
 
 #define UART0_NODE DT_NODELABEL(uart0)
 
@@ -47,5 +48,6 @@ bool init_bg96();
 bool server_connect();
 bool send_payload(char *payload, uint32_t payload_len);
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
+void get_imei(char *imei);
 
 #endif /* GEOCAN_BG96 */

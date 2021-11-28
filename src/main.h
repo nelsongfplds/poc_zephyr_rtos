@@ -4,7 +4,6 @@
 /* Includes */
 #include "bg96.h"
 #include "utils.h"
-#include "battery.h"
 #include "sensors.h"
 
 /* Defines */

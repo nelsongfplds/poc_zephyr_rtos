@@ -5,6 +5,7 @@
 #include <sensor.h>
 #include <device.h>
 #include <drivers/gpio.h>
+#include "battery.h"
 
 /* Defines */
 /* The devicetree node identifier for the "led0" alias. */
@@ -28,8 +29,11 @@
 #error "Unsupported board: shtc3 devicetree alias is not defined"
 #endif
 
+#define TEMP_SENSOR_BUFF_LEN 35
+
 /* Methods */
 bool init_board_sensors();
-void shtc3_sensor_read();
+void shtc3_sensor_read(char *temp, char *ur);
+int get_batt_reading();
 
 #endif /* GEOCAN_SENSORS */

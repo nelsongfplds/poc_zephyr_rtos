@@ -51,7 +51,7 @@ bool init_board_sensors() {
 	return true;
 }
 
-void shtc3_sensor_read() {
+void shtc3_sensor_read(char *temp, char *ur) {
 	int ret;
 	struct sensor_value shtc3_sv;
 
@@ -66,7 +66,8 @@ void shtc3_sensor_read() {
 	}
 
 	/* printk("Temperature: %f C\n", sensor_value_to_double(&shtc3_sv)); */
-	printk("Temperature: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
+	/* printk("Temperature: %d.%d C\n", shtc3_sv.val1, shtc3_sv.val2); */
+	snprintk(temp, TEMP_SENSOR_BUFF_LEN, "%d.%d", shtc3_sv.val1, shtc3_sv.val2);
 
 	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &shtc3_sv);
 	if (ret != 0) {
@@ -74,6 +75,19 @@ void shtc3_sensor_read() {
 	}
 
 	/* printk("Humidity: %f C\n", sensor_value_to_double(&shtc3_sv)); */
-	printk("Humidity: %d.%06d C\n", shtc3_sv.val1, shtc3_sv.val2);
+	/* printk("Humidity: %d.%d %%\n", shtc3_sv.val1, shtc3_sv.val2); */
+	snprintk(ur, TEMP_SENSOR_BUFF_LEN, "%d.%d", shtc3_sv.val1, shtc3_sv.val2);
 }
 
+int get_batt_reading() {
+	int batt_mv = battery_sample();
+		if (batt_mv < 0) {
+			printk("Failed to read battery voltage: %d\n",
+			       batt_mv);
+			return -1;
+		}
+
+	/* printk("Level: %d mV\n", batt_mv); */
+
+	return batt_mv;
+}

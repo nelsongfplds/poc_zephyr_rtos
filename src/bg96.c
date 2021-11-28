@@ -219,6 +219,17 @@ static bool mqtt_connect() {
 	return true;
 }
 
+void get_imei(char *imei) {
+	char ret[30];
+
+	memset(ret, 0, 30);
+	memset(imei, 0, IMEI_SIZE + 1);
+	printk("\n\nGet IMEI\n");
+	send_at_command("AT+GSN", strlen("AT+GSN"), ret);
+	memcpy(imei, &ret[1], IMEI_SIZE+1);
+	imei[IMEI_SIZE+1] = 0;
+}
+
 bool init_bg96() {
 	bool ret;
 

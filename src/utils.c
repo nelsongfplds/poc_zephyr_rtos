@@ -6,14 +6,24 @@ char *set_payload(char *imei, char *vbatt) {
 
 	snprintk(buffer, PAYLOAD_MAX_SIZE,
 		 "{"
-			 "\"id_can\":\"%s\","
 			 "\"id_sku\":\"%s\","
-			 "\"id_device\":\"%s\","
+			 "\"id_geo_can\":\"%s\","
+			 "\"lat\":\"%s\","
+			 "\"long\":\"%s\","
+			 "\"weight_dev\":\"%s\","
+			 "\"temp_dev\":\"%s C\","
+			 "\"ur_dev\":\"%s %%\","
+			 "\"accel_dev\":\"%s\","
 			 "\"bat_val\":\"%s\""
 		 "}\x1A",
-	"dev0",
-	"sku_dev_0",
+	"-/-",
 	imei,
+	"-/-",
+	"-/-",
+	"-/-",
+	"-/-", //temp dev
+	"-/-", //ur dev
+	"-/-", //accel dev
 	vbatt);
 
 	return buffer;
