@@ -38,8 +38,10 @@ void main(void)
 	/* printk("HUM at MAIN: %s\n", ur); */
 	/* printk("VBATT at MAIN: %d\n", batt_lvl); */
 
-	/* char *buffer = set_payload(imei, batt_lvl, temp, ur); */
-	/* printk("%s\n", buffer); */
+	char *buffer = set_payload(imei, batt_lvl, temp, ur);
+	printk("-----------PAYLOAD--------------\n");
+	printk("%s\n", buffer);
+	printk("-----------PAYLOAD--------------\n");
 
 	int ret = server_connect();
 	if (ret) {
