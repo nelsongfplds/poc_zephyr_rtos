@@ -243,7 +243,7 @@ void turn_off_gps() {
 	send_at_command("AT+QGPSEND", strlen("AT+QGPSEND"), NULL);
 }
 
-void determine_position() {
+void determine_position(char *latitude, char *longitude, int *altitude) {
 	char position[150];
 
 	memset(position, 0, 150);
@@ -256,14 +256,12 @@ void determine_position() {
 		printk("Not fixed\n");
 	} else {
 		printk("Fixed position\n");
+		int min;
 		int idx = UTC_TIME_ID;
 		char *token;
 		char *rest = position;
 		char deg_buff[3];
 		char min_buff[10];
-		char latitude[20];
-		char longitude[20];
-		int min;
 
 		memset(latitude, 0, 20);
 		while ((token = strtok_r(rest, ",", &rest))) {
@@ -290,6 +288,7 @@ void determine_position() {
 					snprintk(longitude, 20, "%s.%d", deg_buff, min);
 					break;
 				case ALTITUDE_ID:
+					*altitude = atoi(token);
 					printk("%s\n", token);
 					break;
 				default:
@@ -297,9 +296,6 @@ void determine_position() {
 			}
 			idx++;
 		}
-
-		printk("Latitude: %s\n", latitude);
-		printk("Longitude: %s\n", longitude);
 	}
 }
 
@@ -308,7 +304,6 @@ void get_imei(char *imei) {
 
 	memset(ret, 0, 30);
 	memset(imei, 0, IMEI_SIZE + 1);
-	/* printk("\n\nGet IMEI\n"); */
 	send_at_command("AT+GSN", strlen("AT+GSN"), ret);
 	memcpy(imei, &ret[2], IMEI_SIZE);
 }

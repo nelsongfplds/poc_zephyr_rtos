@@ -22,9 +22,12 @@ void main(void)
 	printk("Devices initialized!\n");
 
 	int batt_lvl;
+	int altitude;
 	char imei[IMEI_SIZE + 1];
 	char temp[TEMP_SENSOR_BUFF_LEN];
 	char ur[TEMP_SENSOR_BUFF_LEN];
+	char latitude[20];
+	char longitude[20];
 
 	memset(temp, 0, TEMP_SENSOR_BUFF_LEN);
 	memset(ur, 0, TEMP_SENSOR_BUFF_LEN);
@@ -38,17 +41,21 @@ void main(void)
 	/* printk("HUM at MAIN: %s\n", ur); */
 	/* printk("VBATT at MAIN: %d\n", batt_lvl); */
 
-	char *buffer = set_payload(imei, batt_lvl, temp, ur);
-	printk("-----------PAYLOAD--------------\n");
-	printk("%s\n", buffer);
-	printk("-----------PAYLOAD--------------\n");
-
 	turn_on_gps();
 	for (int i=0; i<6; i++) {
 		k_msleep(10000);
-		determine_position();
+		determine_position(latitude, longitude, &altitude);
 	}
 	turn_off_gps();
+
+	printk("[Main] Altitude: %d\n", altitude);
+	printk("[Main] Latitude: %s\n", latitude);
+	printk("[Main] Longitude: %s\n", longitude);
+
+	char *buffer = set_payload(imei, batt_lvl, temp, ur, latitude, longitude);
+	printk("-----------PAYLOAD--------------\n");
+	printk("%s\n", buffer);
+	printk("-----------PAYLOAD--------------\n");
 
 	/* int ret = server_connect(); */
 	/* if (ret) { */

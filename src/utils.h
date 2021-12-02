@@ -9,6 +9,6 @@
 #define PAYLOAD_MAX_SIZE 500
 
 /* Methods */
-char *set_payload(char *imei, int vbatt, char *temp, char *ur);
+char *set_payload(char *imei, int vbatt, char *temp, char *ur, char *latitude, char *longitude);
 
 #endif /* JSON_UTILS */

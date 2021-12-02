@@ -58,6 +58,6 @@ uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
 void get_imei(char *imei);
 void turn_on_gps();
 void turn_off_gps();
-void determine_position();
+void determine_position(char *latitude, char *longitude, int *altitude);
 
 #endif /* GEOCAN_BG96 */

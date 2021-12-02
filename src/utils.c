@@ -1,6 +1,6 @@
 #include "utils.h"
 
-char *set_payload(char *imei, int vbatt, char *temp, char *ur) {
+char *set_payload(char *imei, int vbatt, char *temp, char *ur, char *latitude, char *longitude) {
 	char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char));
 	memset(buffer, 0, PAYLOAD_MAX_SIZE);
 
@@ -18,8 +18,8 @@ char *set_payload(char *imei, int vbatt, char *temp, char *ur) {
 		 "}\x1A",
 	"-/-", //id sku
 	imei,
-	"-/-", //lat
-	"-/-", //long
+	latitude, //lat
+	longitude, //long
 	"-/-", //weight dev
 	temp,
 	ur,
