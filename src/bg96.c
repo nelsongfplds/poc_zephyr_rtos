@@ -262,6 +262,8 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 		char *rest = position;
 		char deg_buff[3];
 		char min_buff[10];
+		bool south = true;
+		bool west = true;
 
 		memset(latitude, 0, 20);
 		while ((token = strtok_r(rest, ",", &rest))) {
@@ -274,18 +276,26 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 					printk("%s\n", token);
 					break;
 				case LATITUDE_ID:
+					printk("digit: %c\n", token[9]);
+					if (token[9] == 'N') {
+						south = false;
+					}
 					memcpy(deg_buff, token, 2);
 					memcpy(min_buff, &token[2], 2);
 					memcpy(&min_buff[2], &token[5], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(latitude, 20, "%s.%d", deg_buff, min);
+					snprintk(latitude, 20, "%c%s.%d", south ? '-' : '\0', deg_buff, min);
 					break;
 				case LONGITUDE_ID:
+					printk("digit: %c\n", token[10]);
+					if (token[10] == 'E') {
+						west = false;
+					}
 					memcpy(deg_buff, token, 3);
 					memcpy(min_buff, &token[3], 2);
 					memcpy(&min_buff[2], &token[6], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(longitude, 20, "%s.%d", deg_buff, min);
+					snprintk(longitude, 20, "%c%s.%d", west ? '-' : '\0', deg_buff, min);
 					break;
 				case ALTITUDE_ID:
 					*altitude = atoi(token);
