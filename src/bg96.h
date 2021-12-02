@@ -7,6 +7,7 @@
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
 #include <sys/ring_buffer.h>
+#include <string.h>
 #include "server.h"
 
 /* Defines */
@@ -17,6 +18,10 @@
 #define BG96_AT_CMD_MAX_LEN 400
 #define BG96_AT_RSP_MAX_LEN 200 //TODO: Maybe resize this to a bigger number
 #define IMEI_SIZE 15
+#define UTC_TIME_ID 0
+#define LATITUDE_ID 1
+#define LONGITUDE_ID 2
+#define ALTITUDE_ID 4
 
 #define UART0_NODE DT_NODELABEL(uart0)
 
@@ -39,6 +44,7 @@
 
 #define GPIO1_NODE DT_NODELABEL(gpio1)
 #if DT_NODE_HAS_STATUS(GPIO1_NODE, okay)
+#define GPS_EN_PIN        7
 #define MDM_3V8_PIN       9
 #else
 #error "Unsupported board: gpio1 devicetree node is not defined"
@@ -50,5 +56,8 @@ bool server_connect();
 bool send_payload(char *payload, uint32_t payload_len);
 uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
 void get_imei(char *imei);
+void turn_on_gps();
+void turn_off_gps();
+void determine_position();
 
 #endif /* GEOCAN_BG96 */

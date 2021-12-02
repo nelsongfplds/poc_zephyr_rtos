@@ -43,15 +43,22 @@ void main(void)
 	printk("%s\n", buffer);
 	printk("-----------PAYLOAD--------------\n");
 
-	int ret = server_connect();
-	if (ret) {
-		printk("Connected\n");
-		char *buffer = set_payload(imei, batt_lvl, temp, ur);
-		printk("%s\n", buffer);
-		send_payload(buffer, strlen(buffer));
-	} else {
-		printk("Not connected\n");
+	turn_on_gps();
+	for (int i=0; i<6; i++) {
+		k_msleep(10000);
+		determine_position();
 	}
+	turn_off_gps();
+
+	/* int ret = server_connect(); */
+	/* if (ret) { */
+	/* 	printk("Connected\n"); */
+	/* 	char *buffer = set_payload(imei, batt_lvl, temp, ur); */
+	/* 	printk("%s\n", buffer); */
+	/* 	send_payload(buffer, strlen(buffer)); */
+	/* } else { */
+	/* 	printk("Not connected\n"); */
+	/* } */
 
 	printk("Exiting main\n");
 }

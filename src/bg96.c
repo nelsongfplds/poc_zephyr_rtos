@@ -91,6 +91,15 @@ static bool init_gpio1() {
 
 	gpio_pin_set(gpio1_dev, MDM_3V8_PIN, 1);
 
+	/* GPS */
+	ret = gpio_pin_configure(gpio1_dev, GPS_EN_PIN, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		printk("Error configuring GPS_EN_PIN: %d", ret);
+		return false;
+	}
+
+	gpio_pin_set(gpio1_dev, GPS_EN_PIN, 1);
+
 	return true;
 }
 
@@ -222,6 +231,76 @@ static bool mqtt_connect() {
 	}
 
 	return true;
+}
+
+void turn_on_gps() {
+	printk("Enable GPS\n");
+	send_at_command("AT+QGPS=1,40,50,0,1", strlen("AT+QGPS=1,40,50,0,1"), NULL);
+}
+
+void turn_off_gps() {
+	printk("Disable GPS\n");
+	send_at_command("AT+QGPSEND", strlen("AT+QGPSEND"), NULL);
+}
+
+void determine_position() {
+	char position[150];
+
+	memset(position, 0, 150);
+
+	printk("Determine position\n");
+	send_at_command("AT+QGPSLOC=0", strlen("AT+QGPSLOC=0"), position);
+
+	if (strstr(position, "CME ERROR") != NULL) {
+		// TODO: Get error code
+		printk("Not fixed\n");
+	} else {
+		printk("Fixed position\n");
+		int idx = UTC_TIME_ID;
+		char *token;
+		char *rest = position;
+		char deg_buff[3];
+		char min_buff[10];
+		char latitude[20];
+		char longitude[20];
+		int min;
+
+		memset(latitude, 0, 20);
+		while ((token = strtok_r(rest, ",", &rest))) {
+			min = 0;
+			memset(deg_buff, 0, 3);
+			memset(min_buff, 0, 10);
+
+			switch (idx) {
+				case UTC_TIME_ID:
+					printk("%s\n", token);
+					break;
+				case LATITUDE_ID:
+					memcpy(deg_buff, token, 2);
+					memcpy(min_buff, &token[2], 2);
+					memcpy(&min_buff[2], &token[5], 4);
+					min = atoi(min_buff) / 60;
+					snprintk(latitude, 20, "%s.%d", deg_buff, min);
+					break;
+				case LONGITUDE_ID:
+					memcpy(deg_buff, token, 3);
+					memcpy(min_buff, &token[3], 2);
+					memcpy(&min_buff[2], &token[6], 4);
+					min = atoi(min_buff) / 60;
+					snprintk(longitude, 20, "%s.%d", deg_buff, min);
+					break;
+				case ALTITUDE_ID:
+					printk("%s\n", token);
+					break;
+				default:
+					break;
+			}
+			idx++;
+		}
+
+		printk("Latitude: %s\n", latitude);
+		printk("Longitude: %s\n", longitude);
+	}
 }
 
 void get_imei(char *imei) {
