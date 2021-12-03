@@ -244,6 +244,7 @@ void turn_off_gps() {
 }
 
 void determine_position(char *latitude, char *longitude, int *altitude) {
+	char *ptr;
 	char position[150];
 
 	memset(position, 0, 150);
@@ -251,9 +252,15 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 	printk("Determine position\n");
 	send_at_command("AT+QGPSLOC=0", strlen("AT+QGPSLOC=0"), position);
 
-	if (strstr(position, "CME ERROR") != NULL) {
-		// TODO: Get error code
+	if ((ptr = strstr(position, "CME ERROR")) != NULL) {
 		printk("Not fixed\n");
+		char code[4];
+
+		memset(code, 0, 4);
+		memcpy(code, &ptr[11], 3);
+		altitude = 0;
+		snprintk(latitude, LATITUDE_LEN, "ERROR %s", code);
+		snprintk(longitude, LONGITUDE_LEN, "ERROR %s", code);
 	} else {
 		printk("Fixed position\n");
 		int min;
@@ -284,7 +291,9 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 					memcpy(min_buff, &token[2], 2);
 					memcpy(&min_buff[2], &token[5], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(latitude, 20, "%c%s.%d", south ? '-' : '\0', deg_buff, min);
+					snprintk(latitude, LATITUDE_LEN, "%c%s.%d", south
+						 ? '-'
+						 : '\0', deg_buff, min);
 					break;
 				case LONGITUDE_ID:
 					printk("digit: %c\n", token[10]);
@@ -295,7 +304,9 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 					memcpy(min_buff, &token[3], 2);
 					memcpy(&min_buff[2], &token[6], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(longitude, 20, "%c%s.%d", west ? '-' : '\0', deg_buff, min);
+					snprintk(longitude, LONGITUDE_LEN, "%c%s.%d", west
+						 ? '-'
+						 : '\0', deg_buff, min);
 					break;
 				case ALTITUDE_ID:
 					*altitude = atoi(token);

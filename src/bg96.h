@@ -22,6 +22,8 @@
 #define LATITUDE_ID 1
 #define LONGITUDE_ID 2
 #define ALTITUDE_ID 4
+#define LATITUDE_LEN 30
+#define LONGITUDE_LEN 30
 
 #define UART0_NODE DT_NODELABEL(uart0)
 
