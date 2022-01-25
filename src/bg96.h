@@ -14,9 +14,9 @@
 #define OPEN_CONN_TIMEOUT_S (75+5)
 #define CONN_TIMEOUT_S (5+5)
 #define SLEEP_TIME_MS   5000
-#define RING_BUFFER_SIZE 1024
+#define RECV_BUFFER_SIZE 1024
 #define BG96_AT_CMD_MAX_LEN 400
-#define BG96_AT_RSP_MAX_LEN 200 //TODO: Maybe resize this to a bigger number
+#define BG96_AT_RSP_MAX_LEN 400 //TODO: Maybe resize this to a bigger number
 #define IMEI_SIZE 15
 #define UTC_TIME_ID 0
 #define LATITUDE_ID 1
@@ -24,6 +24,9 @@
 #define ALTITUDE_ID 4
 #define LATITUDE_LEN 30
 #define LONGITUDE_LEN 30
+#define POSITION_LEN 150
+#define MQTT_OPEN_CMD_LEN 100
+#define MQTT_CONN_CMD_LEN 400
 
 #define UART0_NODE DT_NODELABEL(uart0)
 
@@ -56,10 +59,11 @@
 bool init_bg96();
 bool server_connect();
 bool send_payload(char *payload, uint32_t payload_len);
-uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp);
-void get_imei(char *imei);
+bool get_imei(char *imei, size_t imei_len);
 void turn_on_gps();
 void turn_off_gps();
-void determine_position(char *latitude, char *longitude, int *altitude);
+void determine_position(char *latitude, size_t latitude_len,
+			char *longitude, size_t longitude_len,
+			int *altitude);
 
 #endif /* GEOCAN_BG96 */

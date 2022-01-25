@@ -6,11 +6,12 @@ static pthread_cond_t uart_cond;
 static const struct device *uart_dev;
 static const struct device *gpio0_dev;
 static const struct device *gpio1_dev;
-static uint8_t recv_buffer[RING_BUFFER_SIZE]; //TODO: Change to ring buffer
+static uint8_t recv_buffer[RECV_BUFFER_SIZE];
 static uint8_t bg96_resp[BG96_AT_RSP_MAX_LEN];
 static uint32_t bg96_resp_len = 0;
 static bool timed_out;
 
+//OK
 static void uart_callback(const struct device *uart_dev, struct uart_event *evt, void *data) {
 	int ret;
 
@@ -28,7 +29,6 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 			break;
 		case UART_RX_RDY:
 			printk("UART_RX_RDY\n");
-			/* printk("\n\n\n\nOFFSET: %d\n\n\n\n", evt->data.rx.offset); */
 			memcpy(bg96_resp, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
 			bg96_resp_len = evt->data.rx.len;
 			printk("[UART_CALLBACK]: %s\n", bg96_resp);
@@ -59,6 +59,46 @@ static void uart_callback(const struct device *uart_dev, struct uart_event *evt,
 	}
 }
 
+//OK
+static uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp, size_t cmd_rsp_len) {
+	if (cmd_len > BG96_AT_CMD_MAX_LEN) {
+		printk("Issued command is too big\n");
+		return 0;
+	}
+
+	/* Lock in order to block calling thread while waiting for the UART response */
+	pthread_mutex_lock(&uart_mutex);
+
+	int ret;
+	char send_cmd[BG96_AT_CMD_MAX_LEN];
+	char send_cmd_len = cmd_len + 1;
+
+	memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN);
+	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
+	memcpy(send_cmd, cmd, cmd_len);
+	send_cmd[cmd_len] = '\r';
+
+	ret = uart_tx(uart_dev, send_cmd, send_cmd_len, 100);
+
+	/* sleep until callback signals to wake up */
+	pthread_cond_wait(&uart_cond, &uart_mutex);
+	/* woke up, continuing execution */
+
+	if (cmd_resp != NULL) {
+		if (cmd_rsp_len < bg96_resp_len) {
+			printk("Response buffer is too short, cap to it\n");
+			bg96_resp_len = cmd_rsp_len;
+		}
+		memcpy(cmd_resp, bg96_resp, bg96_resp_len);
+	}
+
+	pthread_mutex_unlock(&uart_mutex);
+
+	return bg96_resp_len;
+}
+
+
+//OK
 static bool init_uart() {
 	uart_dev = device_get_binding(DT_LABEL(UART0_NODE));
 	if (uart_dev == NULL) {
@@ -66,13 +106,14 @@ static bool init_uart() {
 		return false;
 	}
 
-	memset(recv_buffer, 0, RING_BUFFER_SIZE);
+	memset(recv_buffer, 0, RECV_BUFFER_SIZE);
 	uart_callback_set(uart_dev, uart_callback, NULL);
-	uart_rx_enable(uart_dev, recv_buffer, RING_BUFFER_SIZE, 100);
+	uart_rx_enable(uart_dev, recv_buffer, RECV_BUFFER_SIZE, 100);
 
 	return true;
 }
 
+//OK
 static bool init_gpio1() {
 	int ret;
 	gpio1_dev = device_get_binding(DT_LABEL(GPIO1_NODE));
@@ -103,6 +144,7 @@ static bool init_gpio1() {
 	return true;
 }
 
+//OK
 static bool init_gpio0() {
 	int ret;
 	gpio0_dev = device_get_binding(DT_LABEL(GPIO0_NODE));
@@ -127,30 +169,28 @@ static bool init_gpio0() {
 	return true;
 }
 
+//OK
 static void setup_cat_m1() {
-	char rsp[100];
-
-	memset(rsp, 0, 100);
-
-	send_at_command("AT+QCFG=\"nwscanseq\",01,1", strlen("AT+QCFG=\"nwscanseq\",01,1"), NULL);
-	send_at_command("AT+QCFG=\"nwscanmode\",0,1", strlen("AT+QCFG=\"nwscanmode\",0,1"), NULL);
-	send_at_command("AT+QCFG=\"iotopmode\",0,1", strlen("AT+QCFG=\"iotopmode\",0,1"), NULL);
-	send_at_command("AT+QCFG=\"band\",f,8000004,8000004,1", strlen("AT+QCFG=\"band\",f,8000004,8000004,1"), NULL);
-	send_at_command("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\"", strlen("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\""), NULL);
+	send_at_command("AT+QCFG=\"nwscanseq\",01,1", strlen("AT+QCFG=\"nwscanseq\",01,1"), NULL, 0);
+	send_at_command("AT+QCFG=\"nwscanmode\",0,1", strlen("AT+QCFG=\"nwscanmode\",0,1"), NULL, 0);
+	send_at_command("AT+QCFG=\"iotopmode\",0,1", strlen("AT+QCFG=\"iotopmode\",0,1"), NULL, 0);
+	send_at_command("AT+QCFG=\"band\",f,8000004,8000004,1", strlen("AT+QCFG=\"band\",f,8000004,8000004,1"), NULL, 0);
+	send_at_command("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\"", strlen("AT+CGDCONT=1,\"IP\",\"zap.vivo.com.br\""), NULL, 0);
 	printk("==== LTE-CAT-M1 and 2G networks initialized ====\n");
 }
 
+//OK
 static bool network_registration() {
 	char rsp[200];
 
 	memset(rsp, 0, 200);
-	send_at_command("AT+CEREG?", strlen("AT+CEREG?"), rsp);
+	send_at_command("AT+CEREG?", strlen("AT+CEREG?"), rsp, 200);
 	if (strstr(rsp, "+CEREG: 0,1") != NULL) {
 		return true;
 	}
 
 	memset(rsp, 0, 200);
-	send_at_command("AT+CGREG?", strlen("AT+CGREG?"), rsp);
+	send_at_command("AT+CGREG?", strlen("AT+CGREG?"), rsp, 200);
 	if (strstr(rsp, "+CGREG: 0,1") != NULL) {
 		return true;
 	}
@@ -158,21 +198,23 @@ static bool network_registration() {
 	return false;
 }
 
+//OK
 static void init_mqtt () {
-	send_at_command("AT+QMTCFG=\"version\",0,4", strlen("AT+QMTCFG=\"version\",0,4"), NULL);
-	send_at_command("AT+QMTCFG=\"keepalive\",0,60", strlen("AT+QMTCFG=\"keepalive\",0,60"), NULL);
-	send_at_command("AT+QSSLCFG=\"ignorelocaltime\",2,1", strlen("AT+QSSLCFG=\"ignorelocaltime\",2,1"), NULL);
-	send_at_command("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF", strlen("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF"), NULL);
-	send_at_command("AT+QMTCFG=\"SSL\",0,1,2", strlen("AT+QMTCFG=\"SSL\",0,1,2"), NULL);
-	send_at_command("AT+QSSLCFG=\"seclevel\",2,0", strlen("AT+QSSLCFG=\"seclevel\",2,0"), NULL);
+	send_at_command("AT+QMTCFG=\"version\",0,4", strlen("AT+QMTCFG=\"version\",0,4"), NULL, 0);
+	send_at_command("AT+QMTCFG=\"keepalive\",0,60", strlen("AT+QMTCFG=\"keepalive\",0,60"), NULL, 0);
+	send_at_command("AT+QSSLCFG=\"ignorelocaltime\",2,1", strlen("AT+QSSLCFG=\"ignorelocaltime\",2,1"), NULL, 0);
+	send_at_command("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF", strlen("AT+QSSLCFG=\"ciphersuite\",2,0xFFFF"), NULL, 0);
+	send_at_command("AT+QMTCFG=\"SSL\",0,1,2", strlen("AT+QMTCFG=\"SSL\",0,1,2"), NULL, 0);
+	send_at_command("AT+QSSLCFG=\"seclevel\",2,0", strlen("AT+QSSLCFG=\"seclevel\",2,0"), NULL, 0);
 	printk("==== MQTT stack initialized ====\n\n");
 }
 
 //TODO: place this after comm closure
 static void deinit_mqtt() {
-	send_at_command("AT+QMTCLOSE=0", strlen("AT+QMTCLOSE=0"), NULL);
+	send_at_command("AT+QMTCLOSE=0", strlen("AT+QMTCLOSE=0"), NULL, 0);
 }
 
+//OK
 static bool send_and_wait_response(char *cmd,
 				   uint32_t len,
 				   char *expected_resp,
@@ -182,7 +224,7 @@ static bool send_and_wait_response(char *cmd,
 	int cond_ret;
 	struct timespec to;
 
-	send_at_command(cmd, len, NULL);
+	send_at_command(cmd, len, NULL, 0);
 
 	pthread_mutex_lock(&uart_mutex);
 
@@ -209,14 +251,15 @@ END:
 	return ret;
 }
 
+//OK
 static bool mqtt_connect() {
-	char open_cmd[70];
-	char conn_cmd[250];
+	char open_cmd[MQTT_OPEN_CMD_LEN];
+	char conn_cmd[MQTT_CONN_CMD_LEN];
 
-	memset(open_cmd, 0, 70);
-	memset(conn_cmd, 0, 250);
+	memset(open_cmd, 0, MQTT_OPEN_CMD_LEN);
+	memset(conn_cmd, 0, MQTT_CONN_CMD_LEN);
 
-	snprintk(open_cmd, 70, "AT+QMTOPEN=0,\"%s\",%d", SERVER_ADDR, SERVER_PORT);
+	snprintk(open_cmd, MQTT_OPEN_CMD_LEN, "AT+QMTOPEN=0,\"%s\",%d", SERVER_ADDR, SERVER_PORT);
 	printk("ATTEMPT TO OPEN CONNECTION\n");
 	if (send_and_wait_response(open_cmd, strlen(open_cmd), "+QMTOPEN: 0,0",
 				   "QMTOPEN", OPEN_CONN_TIMEOUT_S) == false) {
@@ -224,7 +267,7 @@ static bool mqtt_connect() {
 	}
 
 	printk("ATTEMPT TO CONNECT TO AZURE\n");
-	snprintk(conn_cmd, 250, "AT+QMTCONN=0,\"%s\",\"%s/%s/?api-version=2018-06-30\",\"%s\"", DEVICE_ID, SERVER_ADDR, DEVICE_ID, SIGNATURE);
+	snprintk(conn_cmd, MQTT_CONN_CMD_LEN, "AT+QMTCONN=0,\"%s\",\"%s/%s/?api-version=2018-06-30\",\"%s\"", DEVICE_ID, SERVER_ADDR, DEVICE_ID, SIGNATURE);
 	if (send_and_wait_response(conn_cmd, strlen(conn_cmd), "+QMTCONN: 0,0,0",
 				   "QMTCONN", CONN_TIMEOUT_S) == false) {
 		return false;
@@ -233,24 +276,29 @@ static bool mqtt_connect() {
 	return true;
 }
 
+//OK
 void turn_on_gps() {
 	printk("Enable GPS\n");
-	send_at_command("AT+QGPS=1,40,50,0,1", strlen("AT+QGPS=1,40,50,0,1"), NULL);
+	send_at_command("AT+QGPS=1,40,50,0,1", strlen("AT+QGPS=1,40,50,0,1"), NULL, 0);
 }
 
+//OK
 void turn_off_gps() {
 	printk("Disable GPS\n");
-	send_at_command("AT+QGPSEND", strlen("AT+QGPSEND"), NULL);
+	send_at_command("AT+QGPSEND", strlen("AT+QGPSEND"), NULL, 0);
 }
 
-void determine_position(char *latitude, char *longitude, int *altitude) {
+//OK
+void determine_position(char *latitude, size_t latitude_len,
+			char *longitude, size_t longitude_len,
+			int *altitude) {
 	char *ptr;
-	char position[150];
+	char position[POSITION_LEN];
 
-	memset(position, 0, 150);
+	memset(position, 0, POSITION_LEN);
 
 	printk("Determine position\n");
-	send_at_command("AT+QGPSLOC=0", strlen("AT+QGPSLOC=0"), position);
+	send_at_command("AT+QGPSLOC=0", strlen("AT+QGPSLOC=0"), position, POSITION_LEN);
 
 	if ((ptr = strstr(position, "CME ERROR")) != NULL) {
 		printk("Not fixed\n");
@@ -259,8 +307,8 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 		memset(code, 0, 4);
 		memcpy(code, &ptr[11], 3);
 		altitude = 0;
-		snprintk(latitude, LATITUDE_LEN, "ERROR %s", code);
-		snprintk(longitude, LONGITUDE_LEN, "ERROR %s", code);
+		snprintk(latitude, latitude_len, "ERROR %s", code);
+		snprintk(longitude, longitude_len, "ERROR %s", code);
 	} else {
 		printk("Fixed position\n");
 		int min;
@@ -291,7 +339,7 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 					memcpy(min_buff, &token[2], 2);
 					memcpy(&min_buff[2], &token[5], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(latitude, LATITUDE_LEN, "%c%s.%d", south
+					snprintk(latitude, latitude_len, "%c%s.%d", south
 						 ? '-'
 						 : '\0', deg_buff, min);
 					break;
@@ -304,7 +352,7 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 					memcpy(min_buff, &token[3], 2);
 					memcpy(&min_buff[2], &token[6], 4);
 					min = atoi(min_buff) / 60;
-					snprintk(longitude, LONGITUDE_LEN, "%c%s.%d", west
+					snprintk(longitude, longitude_len, "%c%s.%d", west
 						 ? '-'
 						 : '\0', deg_buff, min);
 					break;
@@ -320,15 +368,23 @@ void determine_position(char *latitude, char *longitude, int *altitude) {
 	}
 }
 
-void get_imei(char *imei) {
+//OK
+bool get_imei(char *imei, size_t imei_len) {
+	if (imei_len < IMEI_SIZE) {
+		printk("Buffer too small to receive IMEI\n");
+		return false;
+	}
 	char ret[30];
 
 	memset(ret, 0, 30);
-	memset(imei, 0, IMEI_SIZE + 1);
-	send_at_command("AT+GSN", strlen("AT+GSN"), ret);
+	memset(imei, 0, imei_len + 1);
+	send_at_command("AT+GSN", strlen("AT+GSN"), ret, 30);
 	memcpy(imei, &ret[2], IMEI_SIZE);
+
+	return true;
 }
 
+//OK
 bool init_bg96() {
 	bool ret;
 
@@ -354,7 +410,7 @@ bool init_bg96() {
 
 	char rsp[100];
 	printk("Sending ATE0 to disable echo and allow thread synchronization...\n");
-	send_at_command("ATE0", 4, rsp);
+	send_at_command("ATE0", 4, rsp, 100);
 
 	printk("Sleep until the OK arrives\n");
 	pthread_mutex_lock(&uart_mutex);
@@ -393,7 +449,7 @@ bool send_payload(char *payload, uint32_t payload_len) {
 	printk("send_cmd: %s\n", send_cmd);
 
 	char cmd[] = "AT+QMTPUB=0,0,0,0,\"devices/dev0/messages/events/geoKegEvents/\"";
-	send_at_command(cmd, strlen(cmd), NULL);
+	send_at_command(cmd, strlen(cmd), NULL, 0);
 
 	printk("QMTPUB returned! buffer: %s\n", bg96_resp);
 	if (strstr(bg96_resp, ">") == NULL) {
@@ -402,7 +458,7 @@ bool send_payload(char *payload, uint32_t payload_len) {
 	}
 
 	printk("Send payload...\n");
-	send_at_command(send_cmd, strlen(send_cmd), NULL);
+	send_at_command(send_cmd, strlen(send_cmd), NULL, 0);
 
 	printk("Sleep until QMTPUB returns\n");
 	pthread_mutex_lock(&uart_mutex);
@@ -415,37 +471,5 @@ bool send_payload(char *payload, uint32_t payload_len) {
 	pthread_mutex_unlock(&uart_mutex);
 
 	return true;
-}
-
-uint32_t send_at_command(char *cmd, uint32_t cmd_len, char *cmd_resp) {
-	if (cmd_len > BG96_AT_CMD_MAX_LEN) {
-		return 0;
-	}
-
-	/* Lock in order to block calling thread while waiting for the UART response */
-	pthread_mutex_lock(&uart_mutex);
-
-	int ret;
-	char send_cmd[BG96_AT_CMD_MAX_LEN];
-	char send_cmd_len = cmd_len + 1;
-
-	memset(bg96_resp, 0, BG96_AT_RSP_MAX_LEN);
-	memset(send_cmd, 0, BG96_AT_CMD_MAX_LEN);
-	memcpy(send_cmd, cmd, cmd_len);
-	send_cmd[cmd_len] = '\r';
-
-	ret = uart_tx(uart_dev, send_cmd, send_cmd_len, 100);
-
-	/* sleep until callback signals to wake up */
-	pthread_cond_wait(&uart_cond, &uart_mutex);
-	/* woke up, continuing execution */
-
-	if (cmd_resp != NULL) {
-		memcpy(cmd_resp, bg96_resp, bg96_resp_len);
-	}
-
-	pthread_mutex_unlock(&uart_mutex);
-
-	return bg96_resp_len;
 }
 

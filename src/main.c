@@ -21,9 +21,9 @@ void main(void)
 	}
 	printk("Devices initialized!\n");
 
+	int ret;
 	int batt_lvl;
 	int altitude;
-	bool ur_temp_ret;
 	char imei[IMEI_SIZE + 1];
 	char temp[TEMP_SENSOR_BUFF_LEN];
 	char ur[TEMP_SENSOR_BUFF_LEN];
@@ -36,15 +36,16 @@ void main(void)
 	memset(latitude, 0, LATITUDE_LEN);
 	memset(longitude, 0, LONGITUDE_LEN);
 
-	get_imei(imei);
 	// TODO: Do something with this info
-	ur_temp_ret = shtc3_sensor_read(temp, ur, TEMP_SENSOR_BUFF_LEN, TEMP_SENSOR_BUFF_LEN);
+	ret = get_imei(imei, IMEI_SIZE);
+	// TODO: Do something with this info
+	ret = shtc3_sensor_read(temp, ur, TEMP_SENSOR_BUFF_LEN, TEMP_SENSOR_BUFF_LEN);
 	batt_lvl = get_batt_reading();
 
 	turn_on_gps();
 	for (int i=0; i<6; i++) {
 		k_msleep(10000);
-		determine_position(latitude, longitude, &altitude);
+		determine_position(latitude, LATITUDE_LEN, longitude, LONGITUDE_LEN, &altitude);
 	}
 	turn_off_gps();
 
@@ -53,13 +54,14 @@ void main(void)
 	printk("%s\n", buffer);
 	printk("-----------PAYLOAD--------------\n");
 
-	int ret = server_connect();
+	ret = server_connect();
 	if (ret) {
 		printk("Connected\n");
 		/* send_payload(buffer, strlen(buffer)); */
 	} else {
 		printk("Not connected\n");
 	}
+	free(buffer);
 
 	printk("Exiting main\n");
 }
