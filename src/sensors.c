@@ -51,32 +51,41 @@ bool init_board_sensors() {
 	return true;
 }
 
-void shtc3_sensor_read(char *temp, char *ur) {
+bool shtc3_sensor_read(char *temp, char *ur, size_t temp_len, size_t ur_len) {
 	int ret;
 	struct sensor_value shtc3_sv;
+
+	if (temp_len != TEMP_SENSOR_BUFF_LEN) {
+		printk("Temperature buffer with incorrect size: %d\n", temp_len);
+		return false;
+	}
+	if (ur_len != TEMP_SENSOR_BUFF_LEN) {
+		printk("Umidity buffer with incorrect size: %d\n", temp_len);
+		return false;
+	}
 
 	ret = sensor_sample_fetch(shtc3_dev);
 	if (ret != 0) {
 		printk("sensor_sample_fetch error: %d\n", ret);
+		return false;
 	}
 
 	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_AMBIENT_TEMP, &shtc3_sv);
 	if (ret != 0) {
 		printk("sensor_channel_get error: %d\n", ret);
+		return false;
 	}
 
-	/* printk("Temperature: %f C\n", sensor_value_to_double(&shtc3_sv)); */
-	/* printk("Temperature: %d.%d C\n", shtc3_sv.val1, shtc3_sv.val2); */
 	snprintk(temp, TEMP_SENSOR_BUFF_LEN, "%d.%d", shtc3_sv.val1, shtc3_sv.val2);
 
 	ret = sensor_channel_get(shtc3_dev, SENSOR_CHAN_HUMIDITY, &shtc3_sv);
 	if (ret != 0) {
 		printk("sensor_channel_get error: %d\n", ret);
+		return false;
 	}
 
-	/* printk("Humidity: %f C\n", sensor_value_to_double(&shtc3_sv)); */
-	/* printk("Humidity: %d.%d %%\n", shtc3_sv.val1, shtc3_sv.val2); */
 	snprintk(ur, TEMP_SENSOR_BUFF_LEN, "%d.%d", shtc3_sv.val1, shtc3_sv.val2);
+	return true;
 }
 
 int get_batt_reading() {

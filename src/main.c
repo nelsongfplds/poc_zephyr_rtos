@@ -23,6 +23,7 @@ void main(void)
 
 	int batt_lvl;
 	int altitude;
+	bool ur_temp_ret;
 	char imei[IMEI_SIZE + 1];
 	char temp[TEMP_SENSOR_BUFF_LEN];
 	char ur[TEMP_SENSOR_BUFF_LEN];
@@ -36,7 +37,8 @@ void main(void)
 	memset(longitude, 0, LONGITUDE_LEN);
 
 	get_imei(imei);
-	shtc3_sensor_read(temp, ur);
+	// TODO: Do something with this info
+	ur_temp_ret = shtc3_sensor_read(temp, ur, TEMP_SENSOR_BUFF_LEN, TEMP_SENSOR_BUFF_LEN);
 	batt_lvl = get_batt_reading();
 
 	turn_on_gps();

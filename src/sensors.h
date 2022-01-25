@@ -33,7 +33,7 @@
 
 /* Methods */
 bool init_board_sensors();
-void shtc3_sensor_read(char *temp, char *ur);
+bool shtc3_sensor_read(char *temp, char *ur, size_t temp_len, size_t ur_len);
 int get_batt_reading();
 
 #endif /* GEOCAN_SENSORS */
