@@ -49,10 +49,11 @@ void main(void)
 	/* } */
 	/* turn_off_gps(); */
 
-	/* char *buffer = set_payload(imei, batt_lvl, temp, ur, latitude, longitude); */
-	/* printk("-----------PAYLOAD--------------\n"); */
-	/* printk("%s\n", buffer); */
-	/* printk("-----------PAYLOAD--------------\n"); */
+	char buffer[1024];
+       	set_payload(imei, batt_lvl, temp, ur, latitude, longitude, buffer, 1024);
+	printk("-----------PAYLOAD--------------\n");
+	printk("%s\n", buffer);
+	printk("-----------PAYLOAD--------------\n");
 
 	ret = server_connect();
 	if (ret) {

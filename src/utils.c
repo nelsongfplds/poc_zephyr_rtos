@@ -1,10 +1,9 @@
 #include "utils.h"
 
-char *set_payload(char *imei, int vbatt, char *temp, char *ur, char *latitude, char *longitude) {
-	char *buffer = k_malloc(PAYLOAD_MAX_SIZE*sizeof(char));
-	memset(buffer, 0, PAYLOAD_MAX_SIZE);
+void set_payload(char *imei, int vbatt, char *temp, char *ur, char *latitude, char *longitude, char *buffer, size_t len) {
+	memset(buffer, 0, len);
 
-	snprintk(buffer, PAYLOAD_MAX_SIZE,
+	snprintk(buffer, len,
 		 "{"
 			 "\"id_sku\":\"%s\","
 			 "\"id_geo_can\":\"%s\","
@@ -25,7 +24,5 @@ char *set_payload(char *imei, int vbatt, char *temp, char *ur, char *latitude, c
 	ur,
 	"-/-", //accel dev
 	vbatt);
-
-	return buffer;
 }
 
