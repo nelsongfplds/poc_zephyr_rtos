@@ -49,8 +49,8 @@ void main(void)
 	/* } */
 	/* turn_off_gps(); */
 
-	char buffer[1024];
-       	set_payload(imei, batt_lvl, temp, ur, latitude, longitude, buffer, 1024);
+	char buffer[PAYLOAD_MAX_SIZE];
+	set_payload(imei, batt_lvl, temp, ur, latitude, longitude, buffer, PAYLOAD_MAX_SIZE);
 	printk("-----------PAYLOAD--------------\n");
 	printk("%s\n", buffer);
 	printk("-----------PAYLOAD--------------\n");
