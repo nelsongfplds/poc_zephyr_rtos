@@ -42,17 +42,17 @@ void main(void)
 	ret = shtc3_sensor_read(temp, ur, TEMP_SENSOR_BUFF_LEN, TEMP_SENSOR_BUFF_LEN);
 	batt_lvl = get_batt_reading();
 
-	turn_on_gps();
-	for (int i=0; i<6; i++) {
-		k_msleep(10000);
-		determine_position(latitude, LATITUDE_LEN, longitude, LONGITUDE_LEN, &altitude);
-	}
-	turn_off_gps();
+	/* turn_on_gps(); */
+	/* for (int i=0; i<6; i++) { */
+	/* 	k_msleep(10000); */
+	/* 	determine_position(latitude, LATITUDE_LEN, longitude, LONGITUDE_LEN, &altitude); */
+	/* } */
+	/* turn_off_gps(); */
 
-	char *buffer = set_payload(imei, batt_lvl, temp, ur, latitude, longitude);
-	printk("-----------PAYLOAD--------------\n");
-	printk("%s\n", buffer);
-	printk("-----------PAYLOAD--------------\n");
+	/* char *buffer = set_payload(imei, batt_lvl, temp, ur, latitude, longitude); */
+	/* printk("-----------PAYLOAD--------------\n"); */
+	/* printk("%s\n", buffer); */
+	/* printk("-----------PAYLOAD--------------\n"); */
 
 	ret = server_connect();
 	if (ret) {
@@ -61,7 +61,7 @@ void main(void)
 	} else {
 		printk("Not connected\n");
 	}
-	free(buffer);
+	/* free(buffer); */
 
 	printk("Exiting main\n");
 }
